@@ -2,7 +2,7 @@
 import React from 'react';
 
 function weather() {
-    return <h1>About Page</h1>;
+    return <h1>날씨 페이지</h1>;
 }
 
 export default weather;

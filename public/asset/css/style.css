@@ -1,0 +1,134 @@
+@charset "UTF-8";
+
+/*전역*/
+* {
+    margin: 0 auto;
+    padding: 0;
+    font-family: "Jua", sans-serif;
+    font-weight: 400;
+    font-style: normal;
+
+}
+.btn {
+    z-index: 0 !important;
+}
+
+.text-center {
+    text-align: center !important;
+}
+li {
+    list-style: none !important;
+}
+a {
+    text-decoration: none !important;
+}
+input[type=number]::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+/*헤더*/
+.header {
+    height: 70px;
+}
+.header > div {
+    width: calc(100% / 3);
+    overflow: hidden;
+}
+.logo {
+    width: 100px;
+    height: 40px;
+}
+.side-menu-toggle {
+    display: none;
+}
+.side-menu-container {
+    height: 100vh;
+    z-index: 999 !important;
+    display: none;
+}
+.auth-btn {
+    width: 40px;
+    height: 40px;
+}
+@media screen and (max-width: 900px){
+    .header > div:nth-child(2) {
+        width: 0;
+    }
+    .header > div:nth-child(1),
+    .header > div:nth-child(3){
+        width: 50%;
+    }
+}
+@media screen and (max-width: 600px){
+    .header > div:nth-child(1) ul,
+    .auth {
+        overflow: hidden;
+        width: 0;
+    }
+    .header > div:nth-child(1) {
+        width: 75%;
+    }
+    .header > div:nth-child(3) {
+        width: 25%;
+    }
+    .side-menu-toggle {
+        display: block;
+    }
+
+    #side-menu-toggle:checked ~ .side-menu-container {
+        display: block;
+    }
+}
+
+
+/*auth*/
+.auth-container {
+    height: 100vh;
+}
+.phone-home-btn {
+    display: none;
+}
+@media screen and (max-width: 700px){
+    .auth-container {
+        background: #f8f9fa;
+    }
+    .phone-home-btn {
+        display: block;
+    }
+    .auth-title {
+        margin-bottom: 10px !important;
+    }
+    #form .mb-2 {
+        margin-bottom: 5px !important;
+    }
+    .home-btn {
+        display: none;
+    }
+    #form {
+        width: 100% !important;
+        border-radius: 0 !important;
+        box-shadow: none !important;
+        padding: 15px !important;
+    }
+}
+.email-auth-item {
+    display: none;
+}
+
+.loading-container {
+    height: 100vh;
+    display: none;
+}
+.rotate-box i {
+    animation: 1s loading infinite ease-in-out;
+}
+
+@keyframes loading {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
