@@ -9,6 +9,15 @@
     font-style: normal;
 
 }
+.small-font {
+    font-size: 0.75rem !important;
+}
+input[type="text"],
+textarea {
+    outline: none !important;  /* 클릭 시 기본 테두리 제거 */
+    box-shadow: none !important;
+}
+
 .btn {
     z-index: 0 !important;
 }
@@ -33,6 +42,8 @@ input[type=number]::-webkit-inner-spin-button {
 }
 .header > div {
     width: calc(100% / 3);
+}
+.header > div:nth-child(2) {
     overflow: hidden;
 }
 .logo {
@@ -79,6 +90,15 @@ input[type=number]::-webkit-inner-spin-button {
     #side-menu-toggle:checked ~ .side-menu-container {
         display: block;
     }
+}
+.auth-control-box {
+    width: 200px;
+    right: 0;
+    top: 40px;
+    display: none;
+}
+#auth-box:checked ~ .auth-control-box {
+    display: block;
 }
 
 
@@ -131,4 +151,98 @@ input[type=number]::-webkit-inner-spin-button {
     to {
         transform: rotate(360deg);
     }
+}
+
+/*날씨*/
+.weather-container {
+    height: calc(100vh - 70px);
+}
+
+
+/*메모장*/
+.notepad-container {
+    height: calc(100vh - 70px);
+}
+.calendar {
+    grid-template-columns: repeat(7, 1fr);
+}
+.day {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+.calendar-control {
+    height: 10%;
+}
+.day-title {
+    height: 50px;
+    background: #dee2e6;
+}
+.calendar {
+    height: calc(90% - 50px);
+}
+.date-btn {
+    width: 2rem;
+    height: 2rem;
+    font-size: 1rem;
+}
+
+.notepad-side-bar {
+    width: 12%;
+}
+
+.notepad-main {
+    width: calc(100% - 12%);
+}
+
+.calendar-container > div:nth-child(1),
+.note-container > div:nth-child(1){
+    flex: 1;
+}
+.calendar-container > div:nth-child(2),
+.note-container > div:nth-child(2){
+    flex: 3;
+}
+.application-header,
+.write-header{
+    height: 10%;
+}
+.application-body,
+.write-body {
+    height: 90%;
+}
+
+.note-control {
+    height: 5%;
+}
+.note-title {
+    height: 10%;
+}
+.note-list {
+    height: 90%;
+}
+.notepad-write > div:nth-child(1) {
+    position: sticky;
+    top: 0;
+    background: white !important;
+    z-index: 1;
+    border-top-color: transparent;
+    border-left-color: transparent;
+    border-right-color: transparent;
+}
+.notepad-write::-webkit-scrollbar {
+    display: none;
+}
+.notepad-write *:not(.notepad-write > div:nth-child(1)) {
+    border: none !important;
+}
+
+.note-item:hover button {
+    opacity: 1;
+    pointer-events: all;
+}
+.note-item button {
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity.4s;
 }

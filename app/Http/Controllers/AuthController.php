@@ -13,16 +13,19 @@ use Illuminate\Support\Facades\Auth;
 class AuthController extends Controller
 {
     public function checkId(Request $request) {
-        $id = $request->input('id');
-        if(empty($id)) return response()->json(['success' => false]);
+        $id = $request->id;
 
         $exists = User::where('user_id', $id)->exists();
 
-        return response()->json(['success' => !$exists]);
+        if($exists) {
+            return response()->json(['success' => false]);
+        }
+
+        return response()->json(['success' => true]);
     }
 
     public function sendEmail(Request $request) {
-        $email = $request->input('email');
+        $email = $request->email;
         if(empty($email)) return response()->json(['success' => false, 'message' => '이메일을 작성해주세요.', 'type' => 'danger']);
 
         $exists = User::where('email', $email)->exists();
@@ -40,7 +43,7 @@ class AuthController extends Controller
     }
 
     public function checkEmail(Request $request) {
-        $code = $request->input('code');
+        $code = $request->code;
 
         if (!$code) {
             return response()->json(['success' => false, 'message' => '인증번호를 입력해주세요.', 'type' => 'danger']);
@@ -69,7 +72,7 @@ class AuthController extends Controller
             'email' => $data['email'],
         ]);
 
-        return redirect()->route('login')->with('success', '회원가입이 완료되었습니다.');
+        return redirect()->route('login.page')->with('success', '회원가입이 완료되었습니다.');
     }
 
     public function login(Request $request) {
@@ -79,4 +82,12 @@ class AuthController extends Controller
 
         return redirect()->back()->with('danger', '아이디 또는 비밀번호를 확인해주세요.');
     }
+
+    public function logout()
+    {
+        Auth::logout();
+
+        return response()->json(['success' => true]);
+    }
+
 }

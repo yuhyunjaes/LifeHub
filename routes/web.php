@@ -3,6 +3,8 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\IndexController;
 use App\Http\Controllers\AuthController;
+use Illuminate\Support\Facades\Auth;
+use App\Http\Controllers\NotepadController;
 
 Route::middleware('guest')->group(function () {
     Route::get('/login', [IndexController::class, 'login'])->name('login.page');
@@ -18,6 +20,22 @@ Route::middleware('guest')->group(function () {
 
 Route::get('/csrf-token', function () {
     return csrf_token();
+});
+
+Route::middleware('auth')->group(function () {
+    Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
+
+    Route::post('/api/notepads', [NotepadController::class, 'store'])->name('store');
+    Route::get('/api/notepads/{id}', [NotepadController::class, 'show'])->name('show');
+    Route::put('/api/notepads/{noteId}', [NotepadController::class, 'update'])->name('update');
+    Route::delete('/api/notepads/{noteId}', [NotepadController::class, 'delete'])->name('delete');
+});
+
+Route::get('/user', function () {
+    if(Auth::check()){
+        return response()->json(['success' => true, 'user' =>  Auth::user()]);
+    }
+    return response()->json(['success' => false]);
 });
 
 Route::get('/', [IndexController::class, 'index'])->name('index');

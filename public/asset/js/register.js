@@ -39,10 +39,10 @@ async function checkId() {
         const data = await res.json();
 
         if (data.success) {
-            alert('있어'); // 필요 시 메시지 변경 가능
-        } else {
             setIdMessage('사용가능한 아이디입니다.', 'success');
             idSwitch = true;
+        } else {
+            setIdMessage('이미 존재하는 아이디입니다.', 'danger');
         }
     } catch (err) {
         console.error(err);
@@ -195,10 +195,10 @@ function isKorean(name) {
 
 document.getElementById('form').addEventListener('submit', event => {
     const user_id = document.getElementById('user_id'),
-    password = document.getElementById('password'),
-    password_confirmation = document.getElementById('password_confirmation'),
-    name = document.getElementById('name'),
-    email = document.getElementById('email');
+        password = document.getElementById('password'),
+        password_confirmation = document.getElementById('password_confirmation'),
+        name = document.getElementById('name'),
+        email = document.getElementById('email');
 
     if(!user_id.value) {
         event.preventDefault();
