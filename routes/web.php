@@ -26,7 +26,7 @@ Route::post('/gemini/title', function (Request $request) {
                 'contents' => [['parts' => [['text' => $prompt]]]],
                 'generationConfig' => [
                     'temperature' => 0.7,
-                    'maxOutputTokens' => 1500,
+                    'maxOutputTokens' => 1000,
                 ],
             ]);
 
@@ -78,7 +78,10 @@ Route::middleware('auth')->group(function () {
     Route::delete('/api/notepads/{noteId}', [NotepadController::class, 'DeleteNotepads'])->name('notepads.delete');
 
     Route::post('/api/rooms', [ChatController::class, 'StoreRooms'])->name('rooms.store');
-    Route::post('/api/mesages', [ChatController::class, 'StoreMesages'])->name('mesages.store');
+    Route::get('/api/rooms/{id}', [ChatController::class, 'getRooms'])->name('rooms.get');
+
+    Route::post('/api/messages', [ChatController::class, 'StoreMessages'])->name('messages.store');
+    Route::get('/api/messages/{roomId}', [ChatController::class, 'getMessages'])->name('messages.get');
 });
 
 Route::get('/user', function () {

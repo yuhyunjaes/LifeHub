@@ -4,7 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use App\Models\ChatMesage;
+use App\Models\ChatMessage;
 use App\Models\User;
 
 class ChatRoom extends Model
@@ -15,8 +15,8 @@ class ChatRoom extends Model
         return $this->belongsTo(User::class);
     }
 
-    public function chatmesages() {
-        return $this->hasMany(ChatMesage::class);
+    public function chatmessages() {
+        return $this->hasMany(ChatMessage::class);
     }
 
     protected $fillable = [
