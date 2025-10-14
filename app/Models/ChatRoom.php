@@ -4,9 +4,10 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use App\Models\ChatMesage;
 use App\Models\User;
 
-class Notepad extends Model
+class ChatRoom extends Model
 {
     use HasFactory;
 
@@ -14,10 +15,13 @@ class Notepad extends Model
         return $this->belongsTo(User::class);
     }
 
+    public function chatmesages() {
+        return $this->hasMany(ChatMesage::class);
+    }
+
     protected $fillable = [
         'user_id',
         'title',
-        'content',
-        'category'
+        'model_name'
     ];
 }

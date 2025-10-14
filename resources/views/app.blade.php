@@ -18,5 +18,7 @@
     <div id="app" class="position-relative">
         @include("layout.alert")
     </div>
+
+    <script src="{{ asset('asset/bootstrap/bootstrap.bundle.min.js') }}"></script>
 </body>
 </html>

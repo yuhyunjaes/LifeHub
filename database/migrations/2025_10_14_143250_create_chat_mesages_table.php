@@ -11,12 +11,11 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('notepads', function (Blueprint $table) {
+        Schema::create('chat_mesages', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('user_id')->constrained()->onDelete('cascade');
-            $table->string('title')->nullable();
-            $table->longText('content')->nullable();
-            $table->string('category')->nullable();
+            $table->foreignId('room_id')->constrained('chat_rooms')->onDelete('cascade');
+            $table->enum('role', ['user', 'model']);
+            $table->longText('text');
             $table->timestamps();
         });
     }
@@ -26,6 +25,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('notepads');
+        Schema::dropIfExists('chat_mesages');
     }
 };

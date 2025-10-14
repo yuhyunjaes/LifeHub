@@ -246,3 +246,50 @@ input[type=number]::-webkit-inner-spin-button {
     pointer-events: none;
     transition: opacity.4s;
 }
+.title-form {
+    background: transparent;
+}
+
+
+@media screen and (max-width: 1700px) {
+    .date-box {
+        position: absolute;
+        top: 50%;
+        transform: translate(-50%, -50%);
+        right: 25px;
+    }
+}
+
+
+/*gemini*/
+.gemini-container {
+    height: calc(100vh - 70px);
+}
+.gemini-side-bar {
+    width: 15%;
+}
+.gemini-main {
+    width: calc(100% - 15%);
+}
+.chat-container {
+    height: calc(100% - 80px);
+}
+.prompt-container {
+    height: 80px;
+}
+.prompt {
+    background: transparent !important;
+}
+.prompt::placeholder {
+    color: black !important;
+}
+.prompt:focus {
+    background: transparent !important;
+}
+.prompt-width {
+    width: 60%;
+}
+.prompt-btn {
+    width: 40px;
+    height: 40px;
+}

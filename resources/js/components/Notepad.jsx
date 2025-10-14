@@ -3,7 +3,6 @@ import React, { useEffect } from 'react';
 import { Link, useLocation, Route, Routes  } from 'react-router-dom';
 import Calendar from './Notepad/Calendar';
 import Write from './Notepad/Write';
-import Weather from "@/components/Weather.jsx";
 
 function Notepad({coords, user, csrfToken}) {
     const Location = useLocation();
@@ -22,11 +21,11 @@ function Notepad({coords, user, csrfToken}) {
             <aside className="notepad-side-bar h-100">
                 <ul className="m-0 p-0">
                     <li>
-                        <Link className={`btn d-flex justify-content-start align-items-center w-100 py-2 rounded-0 ${isNotePage ? 'text-primary bg-light' : ''}`} to="/notepad">
+                        <Link className={`btn d-flex justify-content-start align-items-center w-100 py-2 rounded-0 rounded-start-5 ${isNotePage ? 'text-primary bg-light' : ''}`} to="/notepad">
                             <i className="fa-solid fa-clipboard m-0 ms-3"></i>
                             <span className="ms-2">메모</span>
                         </Link>
-                        <Link className={`btn d-flex justify-content-start align-items-center w-100 py-2 rounded-0 ${isCalPage ? 'text-primary bg-light' : ''}`} to="/notepad/calendar">
+                        <Link className={`btn d-flex justify-content-start align-items-center w-100 py-2 rounded-0 rounded-start-5 ${isCalPage ? 'text-primary bg-light' : ''}`} to="/notepad/calendar">
                             <i className="fa-solid m-0 ms-3 fa-calendar-days"></i>
                             <span className="ms-2">메모 캘린더</span>
                         </Link>

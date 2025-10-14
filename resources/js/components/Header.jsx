@@ -36,7 +36,7 @@ function Header({ csrfToken, user, setUser }) {
                 </Link>
                 <ul className="m-0 p-0 ms-5 d-flex">
                     <li className="mx-3">
-                        <Link className="link-dark" to="/weather">날씨</Link>
+                        <Link className="link-dark" to="/gemini">Gemini</Link>
                     </li>
                     <li className="mx-3">
                         <Link className="link-dark" to="/notepad">메모장</Link>

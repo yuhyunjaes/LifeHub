@@ -3,7 +3,7 @@ import { createRoot } from 'react-dom/client';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import Header from './components/Header';
 import Home from './components/Home';
-import Weather from './components/Weather';
+import GeminiChat from './components/GeminiChat';
 import Notepad from './components/Notepad';
 import MyPage from './components/MyPage';
 
@@ -66,7 +66,7 @@ function App() {
             <Header csrfToken={csrfToken} user={user} setUser={setUser} />
             <Routes>
                 <Route path="/" element={<Home />} />
-                <Route path="/weather" element={<Weather user={user} coords={coords} csrfToken={csrfToken} />} />
+                <Route path="/gemini" element={<GeminiChat user={user} coords={coords} csrfToken={csrfToken} />} />
                 <Route path="/notepad/*" element={<Notepad user={user} coords={coords} csrfToken={csrfToken} />} />
                 <Route path="/mypage" element={<MyPage />} />
             </Routes>
