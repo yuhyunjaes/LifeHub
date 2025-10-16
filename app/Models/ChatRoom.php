@@ -16,11 +16,12 @@ class ChatRoom extends Model
     }
 
     public function chatmessages() {
-        return $this->hasMany(ChatMessage::class);
+        return $this->hasMany(ChatMessage::class, 'room_id', 'uuid');
     }
 
     protected $fillable = [
         'user_id',
+        'uuid',
         'title',
         'model_name'
     ];

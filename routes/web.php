@@ -35,13 +35,6 @@ Route::post('/gemini/title', function (Request $request) {
             'body' => $response->body(),
         ]);
 
-        if ($response->failed()) {
-            return response()->json([
-                'error' => 'Gemini 요청 실패',
-                'details' => $response->json(),
-            ], 500);
-        }
-
         return $response->json();
     } catch (\Throwable $e) {
         Log::error('Gemini 내부 오류', ['msg' => $e->getMessage()]);

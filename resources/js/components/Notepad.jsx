@@ -4,7 +4,7 @@ import { Link, useLocation, Route, Routes  } from 'react-router-dom';
 import Calendar from './Notepad/Calendar';
 import Write from './Notepad/Write';
 
-function Notepad({coords, user, csrfToken}) {
+function Notepad({ user, csrfToken}) {
     const Location = useLocation();
     const isNotePage = Location.pathname === '/notepad';
     const isCalPage = Location.pathname === '/notepad/calendar';

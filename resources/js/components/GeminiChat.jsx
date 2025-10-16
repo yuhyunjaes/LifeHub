@@ -1,7 +1,12 @@
 import React, { useState, useRef, useEffect } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+
 import { TITLE_PROMPT, DEFAULT_PROMPT } from "../../../config/prompt.js";
 
 function GeminiChat({ user, csrfToken }) {
+    const { roomId } = useParams();
+    const navigate = useNavigate();
+
     const [prompt, setPrompt] = useState("");
     const [messages, setMessages] = useState([]);
     const [rooms, setRooms] = useState([]);
@@ -32,12 +37,18 @@ function GeminiChat({ user, csrfToken }) {
         getRooms();
     }, [user]);
 
+    useEffect(() => {
+        setChatId(roomId || null);
+    }, [roomId]);
+
+
     const changeRoom = (room) => {
-        const id = Number(room.room_id);
-        if(chatId === id) return;
+        const id = String(room.room_id);
+        if (String(chatId) === id) return;
+        navigate(`/gemini/${id}`);
         setMessages([]);
-        setChatId(id);
-    }
+    };
+
 
     useEffect(() => {
         if (!chatId) return;
@@ -52,7 +63,7 @@ function GeminiChat({ user, csrfToken }) {
                         const newMessages = data.messages;
 
                         for (const msg of newMessages) {
-                            if (!combined.some(m => m.role === msg.role && m.text === msg.text)) {
+                            if (!combined.some(m => m.id === msg.id)) {
                                 combined.push(msg);
                             }
                         }
@@ -78,12 +89,11 @@ function GeminiChat({ user, csrfToken }) {
         setLoading(true);
 
         const titlePrompt = `
-            USER_TEXT : ***${prompt}***
-            ${TITLE_PROMPT}
+        USER_TEXT : ***${prompt}***
+        ${TITLE_PROMPT}
         `;
 
         try {
-
             const titleRes = await fetch("/gemini/title", {
                 method: "POST",
                 headers: {
@@ -102,6 +112,7 @@ function GeminiChat({ user, csrfToken }) {
                 prompt.trim();
 
             let currentRoomId = chatId;
+
             if (!chatId) {
                 const roomRes = await fetch(`/api/rooms`, {
                     method: "POST",
@@ -118,14 +129,17 @@ function GeminiChat({ user, csrfToken }) {
 
                 const roomData = await roomRes.json();
                 if (roomData.success) {
-                    setChatId(roomData.room_id);
                     currentRoomId = roomData.room_id;
+                    setChatId(currentRoomId);
                     const roomList = { room_id: roomData.room_id, title: roomData.title };
                     setRooms((room) => [roomList, ...room]);
+                    navigate(`/gemini/${currentRoomId}`);
                 }
+
             }
 
-            let userText = prompt;
+            // 메시지 UI 업데이트
+            const userText = prompt;
             setMessages((prev) => [
                 ...prev,
                 { role: "user", text: userText },
@@ -134,14 +148,15 @@ function GeminiChat({ user, csrfToken }) {
             setPrompt("");
             textareaRef.current.style.height = "40px";
 
+            // Gemini API 스트리밍
             const aiRes = await fetch(`${START_API}${MODEL_NAME}${END_API}${API_KEY}`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     contents: [{ parts: [{ text: `
-                        USER-TEXT***${prompt}***
-                        ${DEFAULT_PROMPT}
-                    ` }] }],
+                    USER-TEXT***${prompt}***
+                    ${DEFAULT_PROMPT}
+                ` }] }],
                     generationConfig: { temperature: 0.8, maxOutputTokens: 4096 },
                 }),
             });
@@ -186,12 +201,14 @@ function GeminiChat({ user, csrfToken }) {
             }
 
             await saveMessageToDB(currentRoomId, userText, fullText);
+
         } catch (err) {
             console.error("handleSubmit 오류:", err);
         } finally {
             setLoading(false);
         }
     };
+
 
     const saveMessageToDB = async (roomId, userText, aiText) => {
         const res = await fetch("/api/messages", {
@@ -230,6 +247,7 @@ function GeminiChat({ user, csrfToken }) {
                 <div className="w-100 position-sticky top-0 bg-white">
                     <button
                         onClick={() => {
+                            navigate("/gemini");
                             setChatId(null);
                             setMessages([]);
                             setPrompt("");

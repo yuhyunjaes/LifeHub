@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\ChatRoom;
 use App\Models\ChatMessage;
+use Illuminate\Support\Str;
 
 class ChatController extends Controller
 {
@@ -12,17 +13,18 @@ class ChatController extends Controller
 
         $room = ChatRoom::create([
             'user_id' => $request->user_id,
+            'uuid' => Str::uuid()->toString(),
             'title' => $request->title,
             'model_name' => $request->model_name
         ]);
 
-        return response()->json(['success'=>true, 'room_id'=>$room->id, 'title'=>$room->title]);
+        return response()->json(['success'=>true, 'room_id'=>$room->uuid, 'title'=>$room->title]);
     }
 
     public function getRooms($id) {
-        $rooms = ChatRoom::where('user_id', $id)
+        $rooms = ChatRoom::where('uuid', $id)
         ->orderByDesc('updated_at')
-        ->get(['id as room_id', 'title']);
+        ->get(['uuid as room_id', 'title']);
 
         return response()->json([
             'success' => true,
@@ -52,9 +54,9 @@ class ChatController extends Controller
     }
 
     public function getMessages($roomId) {
-        $messages = ChatMessage::where('room_id', $roomId)
-        ->orderBy('created_at')
-        ->get(['id', 'role', 'text']);
+        $room = ChatRoom::where('uuid', $roomId)->first();
+        $messages = $room->chatmessages()
+            ->get(['id', 'role', 'text']);
 
         return response()->json(['success'=>true, 'messages'=>$messages]);
     }
