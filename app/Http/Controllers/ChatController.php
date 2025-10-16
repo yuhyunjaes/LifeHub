@@ -31,26 +31,30 @@ class ChatController extends Controller
     }
 
     public function StoreMessages(Request $request) {
-        ChatMessage::create([
+        $user_message = ChatMessage::create([
             'room_id' => $request->room_id,
             'role' => 'user',
             'text' => $request->user_message
         ]);
 
-        ChatMessage::create([
+        $ai_message = ChatMessage::create([
             'room_id' => $request->room_id,
             'role' => 'model',
             'text' => $request->ai_message
         ]);
 
-        return response()->json(['success'=>true]);
+        return response()->json([
+            'success'=>true,
+            'user_id'=>$user_message->id,
+            'ai_id'=>$ai_message->id
+        ]);
 
     }
 
     public function getMessages($roomId) {
         $messages = ChatMessage::where('room_id', $roomId)
         ->orderBy('created_at')
-        ->get(['role', 'text']);
+        ->get(['id', 'role', 'text']);
 
         return response()->json(['success'=>true, 'messages'=>$messages]);
     }
