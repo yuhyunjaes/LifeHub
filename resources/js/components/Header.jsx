@@ -39,7 +39,7 @@ function Header({ csrfToken, user, setUser }) {
                         <Link className="link-dark" to="/gemini">Gemini</Link>
                     </li>
                     <li className="mx-3">
-                        <Link className="link-dark" to="/notepad">메모장</Link>
+                        <Link className="link-dark" to="/notepad/write">메모장</Link>
                     </li>
                 </ul>
             </div>

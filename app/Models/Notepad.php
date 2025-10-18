@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use App\Models\User;
+use App\Models\ChatMessage;
 
 class Notepad extends Model
 {
@@ -14,7 +15,13 @@ class Notepad extends Model
         return $this->belongsTo(User::class);
     }
 
+    public function message() {
+        return $this->belongsTo(ChatMessage::class, 'chat_id', 'id');
+    }
+
     protected $fillable = [
+        'uuid',
+        'chat_id',
         'user_id',
         'title',
         'content',

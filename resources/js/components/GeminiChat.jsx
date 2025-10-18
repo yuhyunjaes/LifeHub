@@ -1,7 +1,7 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, {useState, useRef, useEffect, lazy} from "react";
 import { useParams, useNavigate } from "react-router-dom";
 
-import { TITLE_PROMPT, DEFAULT_PROMPT } from "../../../config/prompt.js";
+import { TITLE_PROMPT, DEFAULT_PROMPT, HISTORY_PROMPT } from "../../../config/prompt.js";
 
 function GeminiChat({ user, csrfToken }) {
     const { roomId } = useParams();
@@ -12,6 +12,10 @@ function GeminiChat({ user, csrfToken }) {
     const [rooms, setRooms] = useState([]);
     const [loading, setLoading] = useState(false);
     const [chatId, setChatId] = useState(null);
+
+    const [alertSwitch, setAlertSwitch] = useState(false);
+    const [alertMessage, setAlertMessage] = useState("");
+    const [alertStatus, setAlertStatus] = useState(false);
 
     const chatContainerRef = useRef(null);
     const textareaRef = useRef(null);
@@ -38,6 +42,12 @@ function GeminiChat({ user, csrfToken }) {
     }, [user]);
 
     useEffect(() => {
+        if(!roomId) {
+            setChatId(null);
+            setMessages([]);
+            setPrompt("");
+            return;
+        }
         setChatId(roomId || null);
     }, [roomId]);
 
@@ -45,10 +55,23 @@ function GeminiChat({ user, csrfToken }) {
     const changeRoom = (room) => {
         const id = String(room.room_id);
         if (String(chatId) === id) return;
+
         navigate(`/gemini/${id}`);
         setMessages([]);
     };
 
+    const showAlert = (msg, status) => {
+        setAlertMessage(msg);
+        setAlertStatus(status)
+        setAlertSwitch(true);
+    };
+
+    useEffect(() => {
+        if (alertSwitch) {
+            const timer = setTimeout(() => setAlertSwitch(false), 3000);
+            return () => clearTimeout(timer);
+        }
+    }, [alertSwitch]);
 
     useEffect(() => {
         if (!chatId) return;
@@ -70,6 +93,11 @@ function GeminiChat({ user, csrfToken }) {
 
                         return combined;
                     });
+                } else {
+                    showAlert(data.message, false);
+                    navigate('/gemini');
+                    setChatId(null);
+                    setMessages([]);
                 }
             } catch (err) {
                 console.error("메시지 불러오기 오류:", err);
@@ -89,7 +117,7 @@ function GeminiChat({ user, csrfToken }) {
         setLoading(true);
 
         const titlePrompt = `
-        USER_TEXT : ***${prompt}***
+        USER_TEXT***${prompt}***
         ${TITLE_PROMPT}
         `;
 
@@ -138,7 +166,6 @@ function GeminiChat({ user, csrfToken }) {
 
             }
 
-            // 메시지 UI 업데이트
             const userText = prompt;
             setMessages((prev) => [
                 ...prev,
@@ -148,15 +175,23 @@ function GeminiChat({ user, csrfToken }) {
             setPrompt("");
             textareaRef.current.style.height = "40px";
 
-            // Gemini API 스트리밍
+            const historyText =
+                messages && messages.length > 0
+                    ? JSON.stringify(messages)
+                        .replace(/\\/g, "\\\\")
+                        .replace(/`/g, "\\`")
+                    : "empty-message";
+
             const aiRes = await fetch(`${START_API}${MODEL_NAME}${END_API}${API_KEY}`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
-                    contents: [{ parts: [{ text: `
-                    USER-TEXT***${prompt}***
-                    ${DEFAULT_PROMPT}
-                ` }] }],
+                    contents: [{ parts: [
+                            { text: DEFAULT_PROMPT },
+                            { text: HISTORY_PROMPT },
+                            { text: `HISTORY-JSON***${historyText}***` },
+                            { text: `USER-TEXT***${prompt}***` }
+                        ]}],
                     generationConfig: { temperature: 0.8, maxOutputTokens: 4096 },
                 }),
             });
@@ -241,16 +276,38 @@ function GeminiChat({ user, csrfToken }) {
         }
     };
 
+    const handleNotepad = async (msg) => {
+        const content = msg.text;
+        const chat_id = msg.id;
+        const user_id = user.id;
+
+        const res = await fetch('/api/notepads', {
+            method:"POST",
+            headers:{
+                "Content-Type":"application/json",
+                "X-CSRF-TOKEN":csrfToken
+            }, body : JSON.stringify({
+                content : content,
+                chat_id : chat_id,
+                user_id : user_id
+            })
+        });
+        const data = await res.json();
+        if(data.success) {
+            navigate(`/notepad/write/${data.id}`);
+        }
+    }
+
     return (
         <div className="gemini-container container-fluid p-0 d-flex">
             <div className="gemini-side-bar h-100 overflow-x-hidden overflow-y-auto position-relative">
                 <div className="w-100 position-sticky top-0 bg-white">
                     <button
                         onClick={() => {
-                            navigate("/gemini");
                             setChatId(null);
                             setMessages([]);
                             setPrompt("");
+                            navigate("/gemini");
                         }}
                         className="btn d-flex justify-content-start align-items-center w-100 px-0 py-2"
                     >
@@ -270,49 +327,81 @@ function GeminiChat({ user, csrfToken }) {
                             }`}
                             style={{ cursor: "pointer" }}
                         >
-                            <span className="m-0 ms-3">{room.title}</span>
+                            <span className="m-0 w-75 overflow-hidden d-block room-title ms-3 text-start">{room.title}</span>
                         </button>
                     ))}
                 </div>
             </div>
 
-            <div className="gemini-main h-100 d-flex flex-column bg-light">
+            <div className="gemini-main h-100 d-flex flex-column bg-light position-relative">
+                {
+                    alertSwitch ? (
+                            <div className={`alert-message alert alert-${alertStatus ? 'success' : 'danger'} position-fixed z-2 end-0 m-0`}>
+                                {alertMessage}
+                            </div>
+                        )
+                        : ''
+                }
+
                 <div
                     ref={chatContainerRef}
-                    className="w-100 chat-container d-flex flex-column-reverse overflow-x-hidden overflow-y-auto"
-                >
-                    <div className="prompt-width py-5">
-                        {messages.map((msg, i) => (
-                            <div
-                                key={i}
-                                className={`d-flex mb-3 ${
-                                    msg.role === "user"
-                                        ? "justify-content-end"
-                                        : "justify-content-start"
-                                }`}
-                            >
+                    className="w-100 chat-container d-flex flex-column-reverse overflow-x-hidden overflow-y-auto">
+                    {chatId ? (
+                        <div className="prompt-width py-5">
+                            {messages.map((msg, i) => (
                                 <div
-                                    className={`p-3 mx-0 rounded-4 shadow-sm ${
+                                    key={i}
+                                    className={`d-flex chat-item ${
                                         msg.role === "user"
-                                            ? "bg-primary text-white"
-                                            : "bg-white text-dark border"
+                                            ? "justify-content-end"
+                                            : "justify-content-start position-relative"
                                     }`}
-                                    style={{
-                                        maxWidth: "70%",
-                                        whiteSpace: "pre-wrap",
-                                        wordBreak: "break-word",
-                                        borderRadius: "1.25rem",
-                                    }}
-                                >
-                                    {msg.text}
+                                    >
+                                    <div
+                                        className={`p-3 mx-0 rounded-4 shadow-sm ${
+                                            msg.role === "user"
+                                                ? "bg-primary text-white"
+                                                : "bg-white text-dark border"
+                                        }`}
+                                        style={{
+                                            maxWidth: "70%",
+                                            whiteSpace: "pre-wrap",
+                                            wordBreak: "break-word",
+                                            borderRadius: "1.25rem",
+                                        }}
+                                    >
+                                        {msg.text}
+                                    </div>
+
+                                    {(msg.id && msg.role === "model")
+                                        ? (<div
+                                            className="position-absolute chat-control start-0 w-100 d-flex justify-content-start align-items-center">
+                                            <button className="btn" title="복사" onClick={() => {
+                                                window.navigator.clipboard.writeText(msg.text);
+                                                showAlert('복사가 완료되었습니다.', true);
+                                            }}>
+                                                <i className="fa-solid fa-copy"></i>
+                                            </button>
+                                            <button className="btn" title="메모장 저장" onClick={() => handleNotepad(msg)}>
+                                                <i className="fa-solid fa-clipboard"></i>
+                                            </button>
+                                        </div>)
+                                        : ''
+                                    }
                                 </div>
-                            </div>
-                        ))}
-                    </div>
+                            ))}
+                        </div>
+                    ) : (
+                        ''
+                    )}
                 </div>
 
-                <div className="w-100 bg-light prompt-container p-3 position-relative">
-                    <div className="w-100 d-flex justify-content-center align-items-end position-absolute start-0 bottom-0 mb-3">
+                <div className={`w-100 prompt-container p-3 ${chatId ? 'position-relative' : ''}`}>
+
+                    <div className={`w-100 d-flex justify-content-center align-items-end position-absolute start-0 ${chatId ? 'bottom-0 mb-3' : 'bottom-50'}`}>
+                        {!chatId ? (
+                            <h2 className="position-absolute top-title">새로운 채팅을 시작하세요.</h2>
+                        ) : ''}
                         <div className="prompt-width bg-white rounded-5 shadow-sm p-2 d-flex align-items-end">
                             <textarea
                                 ref={textareaRef}

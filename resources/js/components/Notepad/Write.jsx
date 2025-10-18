@@ -1,10 +1,14 @@
 import React, { useEffect, useRef, useState } from 'react';
 import Quill from 'quill';
 import 'quill/dist/quill.snow.css';
+import { useNavigate, useParams } from "react-router-dom";
 
 function Write({ user, csrfToken }) {
+    const { id } = useParams();
+    const navigate = useNavigate();
+
     const [emptyNotepad, setEmptyNotepad] = useState(false);
-    const [noteId, setNoteId] = useState(0);
+    const [noteId, setNoteId] = useState("");
     const [notes, setNotes] = useState([]);
     const [isWriting, setIsWriting] = useState(false);
     const [noteTitle, setNoteTitle] = useState('');
@@ -12,12 +16,80 @@ function Write({ user, csrfToken }) {
     const [searchTerm, setSearchTerm] = useState('');
     const [sortOrder, setSortOrder] = useState('desc');
 
+    const [noteLoading, setNoteLoading] = useState(false);
+
+    const [alertSwitch, setAlertSwitch] = useState(false);
+    const [alertMessage, setAlertMessage] = useState("");
+    const [alertStatus, setAlertStatus] = useState(false);
+
     const quillRef = useRef(null);
     const quillInstance = useRef(null);
     const noteIdRef = useRef(0);
     const csrfRef = useRef(csrfToken);
     const modalRef = useRef(null);
     const modalInstance = useRef(null);
+
+    useEffect(() => {
+        if (!id) return;
+        setNoteLoading(true);
+
+        const getText = async () => {
+            try {
+                const res = await fetch(`/api/notepads/contents/${id}`);
+                const data = await res.json();
+                if (data.success && quillInstance.current) {
+                    setNoteLoading(false);
+                    quillInstance.current.clipboard.dangerouslyPasteHTML(data.content.content || '');
+                    quillInstance.current.history.clear();
+
+                    setIsWriting(true);
+                } else {
+                    navigate('/notepad/write');
+                    setIsWriting(false);
+                }
+            } catch (err) {
+                console.log(err);
+            }
+        };
+
+
+        getText();
+        setNoteId(String(id));
+    }, [id]);
+
+    const showAlert = (msg, status) => {
+        setAlertMessage(msg);
+        setAlertStatus(status)
+        setAlertSwitch(true);
+    };
+
+    async function updateNotepad() {
+        if (!noteIdRef.current || !quillInstance.current) return;
+        const html = quillInstance.current.root.innerHTML;
+        try {
+            const res =  await fetch(`/api/notepads/${noteIdRef.current}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': csrfRef.current
+                },
+                body: JSON.stringify({ text: html, onlyTitle: false })
+            });
+            const data = await res.json();
+            // if(data.success) {
+            //     showAlert(data.message, true);
+            // }
+        } catch (err) {
+            console.error(err);
+        }
+    }
+
+    useEffect(() => {
+        if (alertSwitch) {
+            const timer = setTimeout(() => setAlertSwitch(false), 3000);
+            return () => clearTimeout(timer);
+        }
+    }, [alertSwitch]);
 
     const filteredNotes = notes
         .filter(note =>
@@ -46,30 +118,29 @@ function Write({ user, csrfToken }) {
         const value = e.target.value;
 
         if (!updateNoteTitle) {
-            const targetNote = notes.find(n => Number(n.id) === Number(id));
+            const targetNote = notes.find(n => String(n.id) === String(id));
             if (targetNote) setUpdateNoteTitle(targetNote.title);
         }
 
         setNotes(prev =>
             prev.map(n =>
-                Number(n.id) === Number(id)
+                String(n.id) === String(id)
                     ? { ...n, title: value }
                     : n
             )
         );
     };
 
-
     const resetNoteTitleEvent = (e, id) => {
         if (updateNoteTitle) {
             setNotes(prev =>
                 prev.map(n =>
-                    Number(n.id) === Number(id)
-                        ? { ...n, title: updateNoteTitle } // 원래 제목 복원
+                    String(n.id) === String(id)
+                        ? { ...n, title: updateNoteTitle }
                         : n
                 )
             );
-            setUpdateNoteTitle(''); // 초기화
+            setUpdateNoteTitle('');
         }
     };
 
@@ -80,30 +151,36 @@ function Write({ user, csrfToken }) {
 
             setNotes(prevNotes =>
                 prevNotes.map(n =>
-                    Number(n.id) === Number(id)
-                        ? {...n, title: newTitle}
+                    String(n.id) === String(id)
+                        ? { ...n, title: newTitle }
                         : n
                 )
             );
             setUpdateNoteTitle('');
 
             try {
-                await fetch(`/api/notepads/${id}`, {
+                const res = await fetch(`/api/notepads/${id}`, {
                     method: 'PUT',
                     headers: {
                         'Content-Type': 'application/json',
                         'X-CSRF-TOKEN': csrfRef.current
                     },
-                    body: JSON.stringify({ title: newTitle })
+                    body: JSON.stringify({ title: newTitle, onlyTitle: true })
                 });
+                const data = await res.json();
+                if(data.success) {
+                    showAlert(data.message, true);
+                }
             } catch (err) {
                 console.error(err);
             }
         }
     };
 
-
-
+    const closeModal = (e) => {
+        if (e.target.classList.contains('form-control')) return;
+        document.activeElement?.blur();
+    };
 
     const handleNote = () => {
         setNoteTitle('');
@@ -119,6 +196,7 @@ function Write({ user, csrfToken }) {
             return;
         }
 
+        document.activeElement?.blur();
         modalInstance.current?.hide();
         if (!user?.id) return;
 
@@ -135,16 +213,17 @@ function Write({ user, csrfToken }) {
             const data = await res.json();
             if (data.success) {
                 setNoteId(data.id);
+                showAlert(data.message, true);
                 setNotes(prev => [
                     {
                         id: data.id,
                         title: noteTitle,
-                        content: '',
                         created_at: data.created_at,
                     },
                     ...prev
                 ]);
                 setIsWriting(true);
+                navigate(`/notepad/write/${data.id}`);
                 if (quillInstance.current)
                     quillInstance.current.root.innerHTML = '';
             }
@@ -154,10 +233,7 @@ function Write({ user, csrfToken }) {
     };
 
     const handleSelectNote = (note) => {
-        setNoteId(note.id);
-        setIsWriting(true);
-        if (quillInstance.current)
-            quillInstance.current.root.innerHTML = note.content || '';
+        navigate(`/notepad/write/${note.id}`);
     };
 
     const handleDeleteNote = async (note) => {
@@ -171,10 +247,13 @@ function Write({ user, csrfToken }) {
             });
             const data = await res.json();
             if (data.success) {
+                showAlert(data.message, true);
+                setNoteLoading(false);
                 setNotes(prevNotes => prevNotes.filter(n => n.id !== note.id));
+                navigate(`/notepad/write`);
                 if (noteIdRef.current === note.id) {
                     setIsWriting(false);
-                    setNoteId(0);
+                    setNoteId("");
                     quillInstance.current?.setText('');
                 }
             }
@@ -218,33 +297,6 @@ function Write({ user, csrfToken }) {
             }
         });
 
-        async function updateNotepad() {
-            if (!noteIdRef.current) return;
-            const html = quill.root.innerHTML;
-            try {
-                const res = await fetch(`/api/notepads/${noteIdRef.current}`, {
-                    method: 'PUT',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': csrfRef.current
-                    },
-                    body: JSON.stringify({ text: html })
-                });
-                const data = await res.json();
-                if (data.success) {
-                    setNotes(prevNotes =>
-                        prevNotes.map(note =>
-                            note.id === noteIdRef.current
-                                ? { ...note, content: html }
-                                : note
-                        )
-                    );
-                }
-            } catch (err) {
-                console.error(err);
-            }
-        }
-
         quillInstance.current = quill;
 
         let saveTimeout;
@@ -265,16 +317,18 @@ function Write({ user, csrfToken }) {
     }, []);
 
     useEffect(() => {
+        setNoteLoading(true);
+
         const loadNotes = async () => {
             if (!user?.id) return;
             try {
                 const res = await fetch(`/api/notepads/${user.id}`);
                 const data = await res.json();
                 if (data.success) {
+                    setNoteLoading(false);
                     setNotes(data.notepads.map(n => ({
                         id: n.id,
                         title: n.title,
-                        content: n.content || '',
                         created_at: n.created_at,
                     })));
                 }
@@ -290,7 +344,7 @@ function Write({ user, csrfToken }) {
     }, [notes]);
 
     return (
-        <div className="note-container h-100 d-flex gap-3 p-5">
+        <div className="note-container h-100 d-flex gap-3 p-5 position-relative">
             <div>
                 <div className="note-title">
                     <h3 className="border-start border-3 ps-3 border-primary m-0">메모</h3>
@@ -358,12 +412,12 @@ function Write({ user, csrfToken }) {
                 <div ref={quillRef}></div>
             </div>
 
-            <div ref={modalRef} className="modal fade" id="myModal" tabIndex="-1" aria-hidden="true">
+            <div ref={modalRef} className="modal fade" id="myModal" tabIndex="-1" aria-hidden="true" onClick={closeModal}>
                 <div className="modal-dialog modal-dialog-centered">
                     <div className="modal-content">
                         <div className="modal-header m-0">
                             <h5 className="modal-title m-0">새 메모 등록</h5>
-                            <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            <button type="button" className="btn-close" onClick={closeModal} data-bs-dismiss="modal" aria-label="Close"></button>
                         </div>
                         <div className="modal-body m-0">
                             <label htmlFor="note-title" className="form-label">제목</label>
@@ -374,8 +428,7 @@ function Write({ user, csrfToken }) {
                                 className="form-control"
                                 placeholder="제목을 입력해주세요."
                                 value={noteTitle}
-                                onChange={(e) =>
-                                    setNoteTitle(e.target.value)}
+                                onChange={(e) => setNoteTitle(e.target.value)}
                             />
                             <p className="note-title-text m-0 form-text text-danger"></p>
                         </div>
@@ -387,6 +440,24 @@ function Write({ user, csrfToken }) {
                     </div>
                 </div>
             </div>
+
+            {
+                noteLoading ? (
+                    <div className="note-loading-container top-0 w-100 end-0 position-absolute d-block bg-dark z-3 bg-opacity-10">
+                        <div className="rotate-box position-absolute top-50 start-50 translate-middle">
+                            <i className="fa-solid fa-spinner fs-1 text-dark"></i>
+                        </div>
+                    </div>
+                ) : ''
+            }
+            {
+                alertSwitch ? (
+                        <div className={`note-alert-message alert alert-${alertStatus ? 'success' : 'danger'} position-fixed z-2 end-0 m-0`}>
+                            {alertMessage}
+                        </div>
+                    )
+                    : ''
+            }
         </div>
     );
 }

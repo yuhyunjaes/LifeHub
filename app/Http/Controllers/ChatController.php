@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Models\ChatRoom;
 use App\Models\ChatMessage;
 use Illuminate\Support\Str;
+use function Illuminate\Tests\Integration\Routing\fail;
 
 class ChatController extends Controller
 {
@@ -22,9 +23,9 @@ class ChatController extends Controller
     }
 
     public function getRooms($id) {
-        $rooms = ChatRoom::where('uuid', $id)
-        ->orderByDesc('updated_at')
-        ->get(['uuid as room_id', 'title']);
+        $rooms = ChatRoom::where('user_id', $id)
+            ->orderByDesc('updated_at')
+            ->get(['uuid as room_id', 'title']);
 
         return response()->json([
             'success' => true,
@@ -54,7 +55,14 @@ class ChatController extends Controller
     }
 
     public function getMessages($roomId) {
-        $room = ChatRoom::where('uuid', $roomId)->first();
+        $room = ChatRoom::where('uuid', $roomId)
+            ->where('user_id', auth('web')->id())
+            ->first();
+        if(!$room) return response()->json([
+            'success'=>false,
+            'message'=>'채팅방이 존재하지 않습니다.'
+        ]);
+
         $messages = $room->chatmessages()
             ->get(['id', 'role', 'text']);
 

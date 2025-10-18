@@ -160,6 +160,9 @@ input[type=number]::-webkit-inner-spin-button {
 
 
 /*메모장*/
+.note-loading-container {
+    height: calc(100vh - 70px);
+}
 .notepad-container {
     height: calc(100vh - 70px);
 }
@@ -188,11 +191,16 @@ input[type=number]::-webkit-inner-spin-button {
 }
 
 .notepad-side-bar {
-    width: 12%;
+    width: 15%;
 }
 
 .notepad-main {
-    width: calc(100% - 12%);
+    width: calc(100% - 15%);
+}
+.note-alert-message {
+    width: calc(100% - 15%);
+    top: 70px;
+    animation: show-ani 3.2s ease-out;
 }
 
 .calendar-container > div:nth-child(1),
@@ -292,4 +300,35 @@ input[type=number]::-webkit-inner-spin-button {
 .prompt-btn {
     width: 40px;
     height: 40px;
+}
+.room-title {
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.alert-message {
+    width: calc(100% - 15%);
+    top: 70px;
+    animation: show-ani 3.2s ease-out;
+}
+
+@keyframes show-ani {
+    0%,100% {
+        opacity: 0;
+    }
+    10%,89.99% {
+        opacity: 1;
+    }
+}
+.top-title {
+    top: -150% !important;
+}
+
+.chat-item {
+    margin-bottom: 100px;
+    transition: opacity.4s;
+}
+.chat-control {
+    height: 50px;
+    bottom: -50px;
 }

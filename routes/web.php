@@ -26,7 +26,7 @@ Route::post('/gemini/title', function (Request $request) {
                 'contents' => [['parts' => [['text' => $prompt]]]],
                 'generationConfig' => [
                     'temperature' => 0.7,
-                    'maxOutputTokens' => 1000,
+                    'maxOutputTokens' => 2048,
                 ],
             ]);
 
@@ -67,6 +67,9 @@ Route::middleware('auth')->group(function () {
 
     Route::post('/api/notepads', [NotepadController::class, 'StoreNotepads'])->name('notepads.store');
     Route::get('/api/notepads/{id}', [NotepadController::class, 'GetNotepads'])->name('notepads.get');
+
+    Route::get('/api/notepads/contents/{id}', [NotepadController::class, 'GetContents'])->name('notepads.contents.get');
+
     Route::put('/api/notepads/{noteId}', [NotepadController::class, 'UpdateNotepads'])->name('notepads.update');
     Route::delete('/api/notepads/{noteId}', [NotepadController::class, 'DeleteNotepads'])->name('notepads.delete');
 
