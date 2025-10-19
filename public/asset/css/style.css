@@ -191,14 +191,14 @@ input[type=number]::-webkit-inner-spin-button {
 }
 
 .notepad-side-bar {
-    width: 15%;
+    width: 13%;
 }
 
 .notepad-main {
-    width: calc(100% - 15%);
+    width: calc(100% - 13%);
 }
 .note-alert-message {
-    width: calc(100% - 15%);
+    width: calc(100% - 13%);
     top: 70px;
     animation: show-ani 3.2s ease-out;
 }
@@ -274,10 +274,13 @@ input[type=number]::-webkit-inner-spin-button {
     height: calc(100vh - 70px);
 }
 .gemini-side-bar {
-    width: 15%;
+    width: 13%;
+}
+.gemini-side-bar::-webkit-scrollbar {
+    background: white !important;
 }
 .gemini-main {
-    width: calc(100% - 15%);
+    width: calc(100% - 13%);
 }
 .chat-container {
     height: calc(100% - 80px);
@@ -302,12 +305,13 @@ input[type=number]::-webkit-inner-spin-button {
     height: 40px;
 }
 .room-title {
+    width: 60%;
     white-space: nowrap;
     text-overflow: ellipsis;
 }
 
 .alert-message {
-    width: calc(100% - 15%);
+    width: calc(100% - 13%);
     top: 70px;
     animation: show-ani 3.2s ease-out;
 }
@@ -331,4 +335,22 @@ input[type=number]::-webkit-inner-spin-button {
 .chat-control {
     height: 50px;
     bottom: -50px;
+}
+
+.room-btn {
+    transition: background.4s, color.4s;
+}
+.room-btn:hover:not(.bg-primary) {
+    background: #f8f9fa !important;
+}
+
+.room-edit-btn {
+    opacity: 0;
+    transition: opacity.4s;
+}
+.room-edit-btn:active {
+    border: none !important;
+}
+.room-btn:hover .room-edit-btn {
+    opacity: 1;
 }
