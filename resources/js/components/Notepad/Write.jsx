@@ -63,6 +63,18 @@ function Write({ user, csrfToken }) {
         setAlertSwitch(true);
     };
 
+    function authCheck() {
+        fetch('/api/auth/check')
+            .then(res => res.json())
+            .then(data => {
+                if(data.error) {
+                    alert("로그인 후 이용할 수 있습니다.");
+                    location = "/login";
+                }
+            })
+            .catch(() => location.href = "/login");
+    }
+
     async function updateNotepad() {
         if (!noteIdRef.current || !quillInstance.current) return;
         const html = quillInstance.current.root.innerHTML;
@@ -320,6 +332,7 @@ function Write({ user, csrfToken }) {
         setNoteLoading(true);
 
         const loadNotes = async () => {
+            authCheck();
             if (!user?.id) return;
             try {
                 const res = await fetch(`/api/notepads/${user.id}`);

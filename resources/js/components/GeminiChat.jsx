@@ -13,12 +13,18 @@ function GeminiChat({ user, csrfToken }) {
     const [loading, setLoading] = useState(false);
     const [chatId, setChatId] = useState(null);
 
+    const [editRoom, setEditRoom] = useState(false);
+    const [editRoomId, setEditRoomId] = useState("");
+    const [baseTop, setBaseTop] = useState(0);
+    const [baseScroll, setBaseScroll] = useState(0);
+
     const [alertSwitch, setAlertSwitch] = useState(false);
     const [alertMessage, setAlertMessage] = useState("");
     const [alertStatus, setAlertStatus] = useState(false);
 
     const chatContainerRef = useRef(null);
     const textareaRef = useRef(null);
+    const editRoomRef = useRef(null);
 
     const modalRef = useRef(null);
     const modalInstance = useRef(null);
@@ -46,11 +52,11 @@ function GeminiChat({ user, csrfToken }) {
 
     useEffect(() => {
         if (!user) {
-            alert("로그인 후 이용할 수 있습니다.");
             location = "/login";
         }
 
         const getRooms = async () => {
+            authCheck();
             try {
                 const res = await fetch(`/api/rooms/${user.id}`);
                 const data = await res.json();
@@ -62,6 +68,18 @@ function GeminiChat({ user, csrfToken }) {
 
         getRooms();
     }, [user]);
+
+    function authCheck() {
+        fetch('/api/auth/check')
+            .then(res => res.json())
+            .then(data => {
+                if(data.error) {
+                    alert("로그인 후 이용할 수 있습니다.");
+                    location = "/login";
+                }
+            })
+            .catch(() => location.href = "/login");
+    }
 
     useEffect(() => {
         if (!roomId) {
@@ -129,12 +147,13 @@ function GeminiChat({ user, csrfToken }) {
 
     const handleSubmit = async () => {
         if (!prompt.trim()) return;
+        authCheck();
         setLoading(true);
 
         const titlePrompt = `
-        USER_TEXT***${prompt}***
-        ${TITLE_PROMPT}
-        `;
+    USER_TEXT***${prompt}***
+    ${TITLE_PROMPT}
+    `;
 
         try {
             let currentRoomId = chatId;
@@ -176,8 +195,16 @@ function GeminiChat({ user, csrfToken }) {
                     setChatId(currentRoomId);
                     const roomList = { room_id: roomData.room_id, title: roomData.title };
                     setRooms((room) => [roomList, ...room]);
+
+                    await new Promise((r) => setTimeout(r, 100));
                     navigate(`/gemini/${currentRoomId}`);
                 }
+            }
+
+            if (!currentRoomId) {
+                showAlert("채팅방 생성에 실패했습니다.", false);
+                setLoading(false);
+                return;
             }
 
             const userText = prompt;
@@ -224,7 +251,6 @@ function GeminiChat({ user, csrfToken }) {
             while (true) {
                 const { done, value } = await reader.read();
                 if (done) break;
-                if (!currentRoomId || currentRoomId !== chatId) return;
 
                 const chunk = decoder.decode(value, { stream: true });
                 const lines = chunk
@@ -250,7 +276,7 @@ function GeminiChat({ user, csrfToken }) {
                             }
 
                             fullText = cleaned.trim();
-                            if(fullText.includes('***{')) break;
+                            if (fullText.includes('***{')) break;
 
                             setMessages((prev) => {
                                 const updated = [...prev];
@@ -295,14 +321,13 @@ function GeminiChat({ user, csrfToken }) {
                 }
             }
 
-
-            if(aiArr.length > 0) {
-                if(aiArr[0].id) {
+            if (aiArr.length > 0) {
+                if (aiArr[0].id) {
                     await handleNotepad(aiArr[0]);
                 }
-                await saveMessageToDB(currentRoomId || chatId, userText, fullText, !aiArr[0].id ? aiArr : '');
+                await saveMessageToDB(currentRoomId, userText, fullText, !aiArr[0].id ? aiArr : '');
             } else {
-                await saveMessageToDB(currentRoomId || chatId, userText, fullText, '');
+                await saveMessageToDB(currentRoomId, userText, fullText, '');
             }
 
         } catch (err) {
@@ -312,6 +337,7 @@ function GeminiChat({ user, csrfToken }) {
             setLoading(false);
         }
     };
+
 
     const saveMessageToDB = async (roomId, userText, aiText, arr) => {
         try {
@@ -378,9 +404,24 @@ function GeminiChat({ user, csrfToken }) {
     };
 
     return (
-        <div className="gemini-container container-fluid p-0 d-flex">
-            <div className="gemini-side-bar h-100 overflow-x-hidden overflow-y-auto position-relative">
-                <div className="w-100 position-sticky top-0 bg-white border-bottom">
+        <div className="gemini-container container-fluid p-0 overflow-hidden d-flex position-relative" onClick={(e)=> {
+            if (
+                e.target.classList.contains('room-edit-btn') ||
+                e.target.classList.contains('edit-room-btn') ||
+                e.target.closest('.room-edit-btn')
+            ) return;
+
+            if(editRoom && !e.target.classList.contains('edit-room')) {
+                setEditRoom(false);
+                setEditRoomId("");
+            }
+        }}>
+            <div className="gemini-side-bar h-100 overflow-x-hidden overflow-y-auto position-relative" onScroll={(e) => {
+                const delta = e.target.scrollTop - baseScroll;
+                editRoomRef.current.style.top = `${baseTop - delta}px`;
+            }}
+            >
+                <div className="w-100 position-sticky top-0 bg-white">
                     <button
                         onClick={() => {
                             setChatId(null);
@@ -411,8 +452,17 @@ function GeminiChat({ user, csrfToken }) {
                                 {room.title}
                             </span>
 
-                            <button className="btn room-edit-btn p-0 me-3" onClick={handleOpenModal}>
-                                <i className={`fa-solid fa-trash-can ${chatId === room.room_id ? 'text-white' : ''}`}></i>
+                            <button className={`btn room-edit-btn  p-0 me-3 ${editRoomId === room.room_id ? 'opacity-100' : ''}`} onClick={(e)=> {
+                                setEditRoomId(room.room_id);
+
+                                setEditRoom(true);
+                                const y = e.currentTarget.getBoundingClientRect().y - (e.currentTarget.offsetHeight * 2);
+                                editRoomRef.current.style.top = `${y}px`;
+
+                                setBaseTop(y);
+                                setBaseScroll(e.currentTarget.closest('.gemini-side-bar').scrollTop);
+                            }}>
+                                <i className={`fa-solid edit-room-btn fa-ellipsis ${chatId === room.room_id ? 'text-white' : ''}`}></i>
                             </button>
                         </div>
                     ))}
@@ -534,6 +584,8 @@ function GeminiChat({ user, csrfToken }) {
                     </div>
                 </div>
             </div>
+
+            <div ref={editRoomRef} className="position-absolute edit-room py-5 bg-light shadow rounded" style={{width: '170px', display: `${editRoom ? 'block' : 'none'}`,  left: '200px'}}></div>
 
             <div ref={modalRef} className="modal fade" onClick={handleCloseModal} id="exampleModal" tabIndex="-1" aria-labelledby="exampleModalLabel"
                  aria-hidden="true">

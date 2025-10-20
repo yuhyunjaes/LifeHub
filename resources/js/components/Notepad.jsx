@@ -11,7 +11,6 @@ function Notepad({ user, csrfToken}) {
 
     useEffect(() => {
         if (!user) {
-            alert('로그인 후 이용할 수 있습니다.');
             location = '/login';
         }
     }, [user]);
@@ -21,11 +20,11 @@ function Notepad({ user, csrfToken}) {
             <aside className="notepad-side-bar h-100">
                 <ul className="m-0 p-0">
                     <li>
-                        <Link className={`btn d-flex justify-content-start align-items-center w-100 py-2 rounded-0 ${isNotePage ? 'bg-primary text-white' : ''}`} to="/notepad/write">
+                        <Link className={`btn d-flex justify-content-start align-items-center w-100 py-2 ${isNotePage ? 'bg-primary text-white' : ''}`} to="/notepad/write">
                             <i className="fa-solid fa-clipboard m-0 ms-3"></i>
                             <span className="ms-2">메모</span>
                         </Link>
-                        <Link className={`btn d-flex justify-content-start align-items-center w-100 py-2 rounded-0 ${isCalPage ? 'bg-primary text-white' : ''}`} to="/notepad/calendar">
+                        <Link className={`btn d-flex justify-content-start align-items-center w-100 py-2 ${isCalPage ? 'bg-primary text-white' : ''}`} to="/notepad/calendar">
                             <i className="fa-solid m-0 ms-3 fa-calendar-days"></i>
                             <span className="ms-2">메모 캘린더</span>
                         </Link>

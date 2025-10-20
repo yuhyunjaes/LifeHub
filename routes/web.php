@@ -42,9 +42,11 @@ Route::post('/gemini/title', function (Request $request) {
     }
 });
 
+Route::get('/api/auth/check', function () {
+    if(!Auth::check()) return response()->json(['error' => true]);
 
-
-
+    return response()->json(['error' => false]);
+});
 
 Route::middleware('guest')->group(function () {
     Route::get('/login', [IndexController::class, 'login'])->name('login.page');
