@@ -14,6 +14,7 @@ return new class extends Migration
         Schema::create('chat_messages', function (Blueprint $table) {
             $table->id();
             $table->uuid('room_id');
+            $table->foreign('room_id')->references('uuid')->on('chat_rooms')->onDelete('cascade');
             $table->enum('role', ['user', 'model']);
             $table->longText('text');
             $table->timestamps();

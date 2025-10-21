@@ -6,7 +6,6 @@ use Illuminate\Http\Request;
 use App\Models\ChatRoom;
 use App\Models\ChatMessage;
 use Illuminate\Support\Str;
-use function Illuminate\Tests\Integration\Routing\fail;
 
 class ChatController extends Controller
 {
@@ -22,7 +21,7 @@ class ChatController extends Controller
         return response()->json(['success'=>true, 'room_id'=>$room->uuid, 'title'=>$room->title]);
     }
 
-    public function getRooms($id) {
+    public function GetRooms($id) {
         $rooms = ChatRoom::where('user_id', $id)
             ->orderByDesc('updated_at')
             ->get(['uuid as room_id', 'title']);
@@ -31,6 +30,24 @@ class ChatController extends Controller
             'success' => true,
             'rooms' => $rooms
         ]);
+    }
+
+    public function DeleteRooms($roomId) {
+        $room = ChatRoom::where('uuid', $roomId)->first()->delete();
+
+        if(!$room) return response()->json(['success'=>false, 'message'=>'채팅방이 존재하지 않습니다.']);
+
+        return response()->json(['success'=>true, 'message'=>'채팅방이 삭제되었습니다.']);
+    }
+
+    public function UpdateRooms(Request $request, $roomId) {
+        $room = ChatRoom::where('uuid', $roomId)->first()->update([
+            'title'=>$request->title
+        ]);
+
+        if(!$room) return response()->json(['success'=>false, 'message'=>'체팅방 제목 수정중 오류가 발생했습니다.']);
+
+        return response()->json(['success'=>true, 'message'=>'체팅방 제목이 수정되었습니다.']);
     }
 
     public function StoreMessages(Request $request) {

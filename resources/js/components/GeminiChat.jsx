@@ -14,13 +14,20 @@ function GeminiChat({ user, csrfToken }) {
     const [chatId, setChatId] = useState(null);
 
     const [editRoom, setEditRoom] = useState(false);
+    const [saveRoomTitle, setSaveRoomTitle] = useState("");
+    const [editRoomStatus, setEditRoomStatus] = useState(false);
+    const [editRoomCheck, setEditRoomCheck] = useState(false);
+
     const [editRoomId, setEditRoomId] = useState("");
     const [baseTop, setBaseTop] = useState(0);
     const [baseScroll, setBaseScroll] = useState(0);
 
+
     const [alertSwitch, setAlertSwitch] = useState(false);
     const [alertMessage, setAlertMessage] = useState("");
     const [alertStatus, setAlertStatus] = useState(false);
+
+    const titleInputRef = useRef(null);
 
     const chatContainerRef = useRef(null);
     const textareaRef = useRef(null);
@@ -37,17 +44,113 @@ function GeminiChat({ user, csrfToken }) {
     }, [messages]);
 
     useEffect(() => {
-        if (modalRef.current) {
-            modalInstance.current = new bootstrap.Modal(modalRef.current);
-        }
+        if (!modalRef.current) return;
+
+        modalInstance.current = new bootstrap.Modal(modalRef.current);
+
+        const handleHide = () => {
+            modalRef.current?.setAttribute("inert", "");
+            document.activeElement?.blur();
+        };
+
+        const handleShow = () => {
+            modalRef.current?.removeAttribute("inert");
+        };
+
+        modalRef.current.addEventListener("show.bs.modal", handleShow);
+        modalRef.current.addEventListener("hide.bs.modal", handleHide);
+
+        return () => {
+            modalRef.current?.removeEventListener("show.bs.modal", handleShow);
+            modalRef.current?.removeEventListener("hide.bs.modal", handleHide);
+        };
     }, []);
 
     const handleOpenModal = () => {
         modalInstance.current?.show();
-    }
+    };
 
     const handleCloseModal = () => {
-        document.activeElement?.blur();
+        modalInstance.current?.hide();
+    };
+
+    useEffect(() => {
+        if (editRoomStatus && titleInputRef.current) {
+            titleInputRef.current.focus();
+        }
+    }, [editRoomStatus]);
+
+
+    const handleChangeType = (id) => {
+        const EditId = String(id);
+        if(!EditId) return;
+        setEditRoomStatus(true);
+        setSaveRoomTitle(rooms.find(item => item.room_id === EditId).title);
+    }
+
+    const resetRoom = () => {
+        setChatId(null);
+        setMessages([]);
+        setPrompt("");
+        navigate("/gemini");
+        textareaRef.current?.focus();
+    }
+
+    const updateRoom = async (title) => {
+        if(!editRoomId || !title) return;
+
+        try {
+            const res = await fetch(`/api/rooms/${editRoomId}`, {
+                method: 'PUT',
+                headers : {
+                    "Content-Type" : "application/json",
+                    "X-CSRF-TOKEN" : csrfToken
+                },
+                body : JSON.stringify({ title : title })
+            });
+            const data = await res.json();
+            if(data.success) {
+                showAlert(data.message, true);
+                setEditRoomCheck(false);
+            } else {
+                showAlert(data.message, false);
+            }
+        } catch (err) {
+            console.error(err);
+        }
+    }
+
+    const deleteRoom = async (id) => {
+        if(!id) return;
+        const room_id = id;
+
+        try {
+            const res = await fetch(`/api/rooms/${room_id}`, {
+                method : "DELETE",
+                headers : {
+                    "Content-Type" : "application/json",
+                    "X-CSRF-TOKEN" : csrfToken
+                }
+            });
+            const data = await res.json();
+
+            if(data.success) {
+                if(room_id === roomId) {
+                    resetRoom();
+                }
+                setRooms(prevRooms => prevRooms.filter(item => item.room_id !== room_id));
+                setEditRoom(false);
+                setEditRoomCheck(false);
+                setEditRoomStatus(false);
+                showAlert(data.message, true);
+                setEditRoomId("");
+                handleCloseModal();
+            } else {
+                showAlert(data.message, false);
+            }
+        } catch (err) {
+            console.log(err);
+        }
     }
 
     useEffect(() => {
@@ -92,7 +195,7 @@ function GeminiChat({ user, csrfToken }) {
     }, [roomId]);
 
     const changeRoom = (room, e) => {
-        if(e.target.classList.contains('room-edit-btn') || e.target.classList.contains('fa-solid')) return;
+        if(e.target.classList.contains('room-edit-btn') || e.target.classList.contains('fa-solid') || e.target.classList.contains('form-control')) return;
 
         const id = String(room.room_id);
         if (String(chatId) === id) return;
@@ -408,28 +511,28 @@ function GeminiChat({ user, csrfToken }) {
             if (
                 e.target.classList.contains('room-edit-btn') ||
                 e.target.classList.contains('edit-room-btn') ||
-                e.target.closest('.room-edit-btn')
+                e.target.closest('.room-edit-btn') ||
+                e.target.closest('.modal') ||
+                e.target.closest('.edit-room') ||
+                e.target.closest('.edit-room-title')
             ) return;
 
-            if(editRoom && !e.target.classList.contains('edit-room')) {
+            if(editRoom) {
                 setEditRoom(false);
                 setEditRoomId("");
+                setEditRoomStatus(false);
+                setSaveRoomTitle("");
             }
         }}>
             <div className="gemini-side-bar h-100 overflow-x-hidden overflow-y-auto position-relative" onScroll={(e) => {
+                if(!editRoomRef.current) return;
                 const delta = e.target.scrollTop - baseScroll;
                 editRoomRef.current.style.top = `${baseTop - delta}px`;
             }}
             >
                 <div className="w-100 position-sticky top-0 bg-white">
                     <button
-                        onClick={() => {
-                            setChatId(null);
-                            setMessages([]);
-                            setPrompt("");
-                            navigate("/gemini");
-                            textareaRef.current.focus();
-                        }}
+                        onClick={resetRoom}
                         className="btn d-flex justify-content-start align-items-center w-100 px-0 py-2"
                     >
                         <i className="fa-solid fa-pen-to-square m-0 ms-3"></i>
@@ -448,9 +551,50 @@ function GeminiChat({ user, csrfToken }) {
                             }`}
                             style={{cursor: "pointer"}}
                         >
-                            <span className="m-0 overflow-hidden d-block room-title ms-3 text-start">
+                            {(editRoomStatus && editRoomId === room.room_id) ? (
+                                <input ref={titleInputRef} type="text" name="" id="" className="form-control edit-room-title" value={room.title}
+                                       onKeyDown={(e) => {
+                                           if(e.key === 'Enter') {
+                                               if(room.title.trim().length <= 0) return;
+                                               setEditRoomCheck(true);
+                                               setEditRoomStatus(false);
+                                               setEditRoomId("");
+                                               setEditRoom(false);
+
+                                               updateRoom(room.title);
+                                           }
+                                       }}
+
+                                       onChange={(e) => {
+                                           const newTitle = e.target.value;
+                                           setRooms(prevRooms =>
+                                               prevRooms.map(roomItem =>
+                                                   roomItem.room_id === room.room_id
+                                                       ? { ...roomItem, title: newTitle }
+                                                       : roomItem
+                                               )
+                                           );
+                                       }}
+
+                                       onBlur={()=> {
+                                           if(!editRoomCheck) {
+                                               setRooms(prevRooms =>
+                                                   prevRooms.map(roomItem =>
+                                                       roomItem.room_id === room.room_id
+                                                           ? { ...roomItem, title: saveRoomTitle }
+                                                           : roomItem
+                                                   )
+                                               );
+                                           }
+                                           setEditRoomCheck(false);
+                                       }}
+
+                                />
+                            ) : (
+                                <span className="m-0 overflow-hidden d-block room-title ms-3 text-start">
                                 {room.title}
                             </span>
+                            )}
 
                             <button className={`btn room-edit-btn  p-0 me-3 ${editRoomId === room.room_id ? 'opacity-100' : ''}`} onClick={(e)=> {
                                 setEditRoomId(room.room_id);
@@ -467,7 +611,7 @@ function GeminiChat({ user, csrfToken }) {
                         </div>
                     ))}
                 </div>
-                <div className="w-100 position-sticky bg-white border-top bottom-0 p-0 py-4"></div>
+                <div className="w-100 position-sticky bg-white border-top bottom-0 p-0 py-5"></div>
             </div>
 
             <div className="gemini-main h-100 d-flex flex-column bg-light position-relative">
@@ -585,11 +729,27 @@ function GeminiChat({ user, csrfToken }) {
                 </div>
             </div>
 
-            <div ref={editRoomRef} className="position-absolute edit-room py-5 bg-light shadow rounded" style={{width: '170px', display: `${editRoom ? 'block' : 'none'}`,  left: '200px'}}></div>
+            <div ref={editRoomRef} className="position-absolute edit-room p-2 bg-light shadow rounded" style={{width: '170px', display: `${editRoom ? 'block' : 'none'}`,  left: '200px'}}>
+                <button className="btn btn-light w-100 d-flex justify-content-start align-items-center" onClick={() => {
+                    handleChangeType(editRoomId);
+                }}>
+                    <i className="fa-solid fa-pen m-0"></i>
+                    <span className="m-0 ms-2">이름 바꾸기</span>
+                </button>
+                <button className="btn btn-light w-100 d-flex justify-content-start align-items-center text-danger" onClick={handleOpenModal}>
+                    <i className="fa-solid fa-trash-can m-0"></i>
+                    <span className="m-0 ms-2">삭제하기</span>
+                </button>
+            </div>
 
-            <div ref={modalRef} className="modal fade" onClick={handleCloseModal} id="exampleModal" tabIndex="-1" aria-labelledby="exampleModalLabel"
-                 aria-hidden="true">
-                <div className="modal-dialog">
+            <div ref={modalRef}
+                 className="modal fade" onClick={handleCloseModal}
+                 id="exampleModal"
+                 tabIndex="-1"
+                 inert
+                 aria-labelledby="exampleModalLabel"
+            >
+                <div className="modal-dialog" onClick={(e) => e.stopPropagation()}>
                     <div className="modal-content">
                         <div className="modal-header m-0">
                             <h1 className="modal-title fs-5 m-0" id="exampleModalLabel">채팅방 삭제</h1>
@@ -597,11 +757,18 @@ function GeminiChat({ user, csrfToken }) {
                                     aria-label="Close"></button>
                         </div>
                         <div className="modal-body w-100">
-                            채팅방을 정말 삭제 하시겠습니까?
+                            {editRoomId && (
+                                rooms.find(item => item.room_id === editRoomId)?.title + " " || " "
+                            )}
+                             채팅방을 정말 삭제 하시겠습니까?
                         </div>
                         <div className="modal-footer w-100">
                             <button type="button" className="btn btn-secondary" data-bs-dismiss="modal">취소</button>
-                            <button type="button" className="btn btn-primary">삭제</button>
+                            <button type="button" className="btn btn-primary"
+                                    onClick={() => {
+                                        deleteRoom(editRoomId)
+                                    }}
+                            >삭제</button>
                         </div>
                     </div>
                 </div>

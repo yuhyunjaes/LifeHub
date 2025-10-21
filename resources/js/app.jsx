@@ -8,12 +8,11 @@ import Notepad from './components/Notepad';
 import MyPage from './components/MyPage';
 
 function App() {
-    const [user, setUser] = useState(undefined); // undefined = 아직 서버 확인 전
+    const [user, setUser] = useState(undefined);
     const [csrfToken, setCsrfToken] = useState("");
 
     useEffect(() => {
 
-        // 사용자 정보, CSRF 토큰 가져오기
         (async () => {
             try {
                 const userRes = await fetch('/user');
