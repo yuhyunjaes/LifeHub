@@ -18,6 +18,8 @@ function Write({ user, csrfToken }) {
 
     const [noteLoading, setNoteLoading] = useState(false);
 
+    const [modal, setModal] = useState(false);
+
     const [alertSwitch, setAlertSwitch] = useState(false);
     const [alertMessage, setAlertMessage] = useState("");
     const [alertStatus, setAlertStatus] = useState(false);
@@ -26,11 +28,13 @@ function Write({ user, csrfToken }) {
     const quillInstance = useRef(null);
     const noteIdRef = useRef(0);
     const csrfRef = useRef(csrfToken);
-    const modalRef = useRef(null);
-    const modalInstance = useRef(null);
 
     useEffect(() => {
-        if (!id) return;
+        if (!id) {
+            setIsWriting(false);
+            setNoteId("");
+            return;
+        }
         setNoteLoading(true);
 
         const getText = async () => {
@@ -114,12 +118,6 @@ function Write({ user, csrfToken }) {
         });
 
     useEffect(() => {
-        if (modalRef.current) {
-            modalInstance.current = new bootstrap.Modal(modalRef.current);
-        }
-    }, []);
-
-    useEffect(() => {
         noteIdRef.current = noteId;
     }, [noteId]);
     useEffect(() => {
@@ -189,18 +187,6 @@ function Write({ user, csrfToken }) {
         }
     };
 
-    const closeModal = (e) => {
-        if (e.target.classList.contains('form-control')) return;
-        document.activeElement?.blur();
-    };
-
-    const handleNote = () => {
-        setNoteTitle('');
-        const titleText = document.querySelector('.note-title-text');
-        titleText.textContent = '';
-        modalInstance.current?.show();
-    };
-
     const handleSubmitNote = async () => {
         if (!noteTitle.trim()) {
             const titleText = document.querySelector('.note-title-text');
@@ -209,7 +195,6 @@ function Write({ user, csrfToken }) {
         }
 
         document.activeElement?.blur();
-        modalInstance.current?.hide();
         if (!user?.id) return;
 
         try {
@@ -224,6 +209,8 @@ function Write({ user, csrfToken }) {
 
             const data = await res.json();
             if (data.success) {
+                setNoteTitle('');
+                setModal(false);
                 setNoteId(data.id);
                 showAlert(data.message, true);
                 setNotes(prev => [
@@ -320,12 +307,13 @@ function Write({ user, csrfToken }) {
         const handleSaveShortcut = (e) => {
             if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') {
                 e.preventDefault();
+                e.stopPropagation();
                 updateNotepad();
             }
         };
 
-        window.addEventListener("keydown", handleSaveShortcut);
-        return () => window.removeEventListener("keydown", handleSaveShortcut);
+        window.addEventListener("keydown", handleSaveShortcut, { capture: true });
+        return () => window.removeEventListener("keydown", handleSaveShortcut, { capture: true });
     }, []);
 
     useEffect(() => {
@@ -357,60 +345,84 @@ function Write({ user, csrfToken }) {
     }, [notes]);
 
     return (
-        <div className="note-container h-100 d-flex gap-3 p-5 position-relative">
-            <div>
-                <div className="note-title">
-                    <h3 className="border-start border-3 ps-3 border-primary m-0">메모</h3>
-                </div>
-                <div className="note-list rounded shadow-sm bg-white overflow-x-hidden overflow-y-auto position-relative">
-                    <div className="w-100 bg-white shadow-sm p-3 position-sticky top-0 d-flex justify-content-between align-items-center">
+        <div className="note-container flex h-full gap-3 p-[2rem] relative">
 
-                        <div className="w-100 d-flex justify-content-start align-items-center m-0">
-                            <div className="m-0">
-                                <label htmlFor="search-note-title" className="form-label ms-1">검색</label>
+            <div className="flex flex-col w-[25%]">
+                <div className="h-[10%]">
+                    <h3 className="border-l-4 border-blue-500 pl-3 text-3xl m-0">메모</h3>
+                </div>
+
+                <div className="w-full h-[90%] rounded-xl shadow-sm bg-white overflow-y-auto relative">
+                    <div className="w-full bg-white shadow-sm p-3 sticky top-0 flex justify-between items-center">
+
+                        <div className="w-full flex items-center gap-2">
+                            <div>
+                                <label htmlFor="search-note-title" className="block text-sm pl-1">검색</label>
                                 <input onChange={(e) => setSearchTerm(e.target.value)}
-                                       type="text" name="search-note-title" id="search-note-title" className="form-control" placeholder="제목을 입력해주세요."/>
+                                       type="text"
+                                       id="search-note-title"
+                                       placeholder="제목을 입력해주세요."
+                                       className="border h-[35px] border-gray-300 rounded px-2 py-1 w-[150px] focus:outline-none focus:ring-2 focus:ring-blue-400"
+                                />
                             </div>
-                            <div className="m-0 ms-2">
-                                <label htmlFor="orderBy" className="form-label">정렬</label>
-                                <select onChange={(e) => setSortOrder(e.target.value)} name="orderBy" id="orderBy" className="form-select">
-                                    <option value="desc">등록일 기준 내림차순</option>
-                                    <option value="asc">등록일 기준 오름차순</option>
+
+                            <div>
+                                <label htmlFor="orderBy" className="block text-sm">정렬</label>
+                                <select
+                                    onChange={(e) => setSortOrder(e.target.value)}
+                                    id="orderBy"
+                                    className="border border-gray-300 h-[35px] rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                                >
+                                    <option value="desc">내림차순</option>
+                                    <option value="asc">오름차순</option>
                                 </select>
                             </div>
                         </div>
 
-                        <button onClick={handleNote} className="btn btn-primary ms-3">
+                        <button className="bg-blue-500 hover:bg-blue-600 text-white p-2 rounded-md ml-3" onClick={() => {setModal(true)}}>
                             <i className="fa-solid fa-plus"></i>
                         </button>
                     </div>
 
-                    <div className={`${emptyNotepad ? 'd-block' : 'd-none'} position-absolute top-50 start-50 translate-middle`}>
-                        메모가 존재하지 않습니다.
-                    </div>
+                    {emptyNotepad && (
+                        <p className="absolute top-1/2 left-1/2 -translate-x-1/2 text-gray-500">
+                            메모가 없습니다
+                        </p>
+                    )}
 
                     {filteredNotes.map(note => (
                         <div
                             key={note.id}
-                            className={`note-item d-flex justify-content-between align-items-center position-relative w-100 p-3 border shadow-sm ${note.id === noteId ? 'bg-primary text-white' : ''}`}
                             onClick={() => handleSelectNote(note)}
-                            style={{ cursor: 'pointer' }}
+                            className={`flex justify-between items-center w-full p-3 border-b border-b-gray-300 cursor-pointer
+                            ${note.id === noteId ? 'bg-blue-500 text-white' : 'bg-white'}
+                        `}
                         >
                             <input
+                                readOnly={note.id !== noteId}
                                 type="text"
-                                className={`m-0 title-form border-0 ${note.id === noteId ? 'text-white' : 'text-dark'}`}
+                                className={`bg-transparent w-[70%] focus:outline-none
+                                ${note.id === noteId ? 'text-white' : 'text-black'}
+                            `}
+                                disabled={noteLoading}
                                 value={note.title}
                                 onChange={(e) => updateNoteTitleTyping(e, note.id)}
                                 onKeyDown={(e) => updateNoteTitleEvent(e, note.id)}
                                 onBlur={(e) => resetNoteTitleEvent(e, note.id)}
                             />
-                            <div className="m-0">
-                                <span className="date-box">
-                                  {note.created_at.split(' ')[0]}
-                                </span>
 
-                                <button onClick={() => handleDeleteNote(note)} className="btn btn-primary ms-2 py-1">
-                                    <i className="fa-solid fa-x small-font"></i>
+                            <div className="flex items-center gap-2">
+                            <span className="text-xs opacity-80">
+                                {note.created_at.split(" ")[0]}
+                            </span>
+                                <button
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleDeleteNote(note);
+                                    }}
+                                    className="bg-red-600 hover:bg-red-600 cursor-pointer text-white text-xs px-2 py-1 rounded"
+                                >
+                                    <i className="fa-solid fa-x"></i>
                                 </button>
                             </div>
                         </div>
@@ -418,61 +430,50 @@ function Write({ user, csrfToken }) {
                 </div>
             </div>
 
-            <div
-                className="notepad-write bg-white shadow-sm rounded overflow-x-hidden overflow-y-auto position-relative"
-                style={{ display: isWriting ? 'block' : 'none' }}
-            >
+            <div className={`${isWriting ? "flex-1 bg-white shadow-sm rounded overflow-y-auto" : "hidden"}`}>
                 <div ref={quillRef}></div>
             </div>
 
-            <div ref={modalRef} className="modal fade" id="myModal" tabIndex="-1" aria-hidden="true" onClick={closeModal}>
-                <div className="modal-dialog modal-dialog-centered">
-                    <div className="modal-content">
-                        <div className="modal-header m-0">
-                            <h5 className="modal-title m-0">새 메모 등록</h5>
-                            <button type="button" className="btn-close" onClick={closeModal} data-bs-dismiss="modal" aria-label="Close"></button>
-                        </div>
-                        <div className="modal-body m-0">
-                            <label htmlFor="note-title" className="form-label">제목</label>
-                            <input
-                                type="text"
-                                name="note-title"
-                                id="note-title"
-                                className="form-control"
-                                placeholder="제목을 입력해주세요."
-                                value={noteTitle}
-                                onChange={(e) => setNoteTitle(e.target.value)}
-                            />
-                            <p className="note-title-text m-0 form-text text-danger"></p>
-                        </div>
-                        <div className="modal-footer m-0">
-                            <button type="button" className="btn btn-primary" onClick={handleSubmitNote}>
-                                등록
-                            </button>
+            {noteLoading && (
+                <div className="absolute inset-0 bg-black/10 bg-opacity-10 flex items-center justify-center z-[999]">
+                    <i className="fa-solid fa-spinner animate-spin text-3xl text-gray-600"></i>
+                </div>
+            )}
+
+            {alertSwitch && (
+                <div
+                    className={`alert ${alertStatus ? "alert-success" : "alert-danger"}`}
+                >
+                    {alertMessage}
+                </div>
+            )}
+
+            {modal && (
+                <div className="modal-area" onClick={() => {setModal(false);setNoteTitle('');}}>
+                    <div className="modal">
+                        <div className="modal-content mid-modal" onClick={(e) => {e.stopPropagation()}}>
+                            <div className="modal-header">
+                                <h1 className="text-xl m-0">새 메모 등록</h1>
+                                <button onClick={() => {setModal(false); setNoteTitle('');}}>
+                                    <i className="fa-solid fa-x text-gray-500 hover:text-black cursor-pointer"></i>
+                                </button>
+                            </div>
+                            <div className="modal-body">
+                                <input type="text" name="" id="" className="border border-gray-300 w-full rounded py-2" onChange={(e) => {setNoteTitle(e.target.value);}} placeholder=" 제목을 입력해주세요."/>
+                                <span className="note-title-text text-xs text-red-600"></span>
+                            </div>
+                            <div className="modal-footer">
+                                <button onClick={() => {setModal(false); setNoteTitle('');}} className="btn bg-gray-400 hover:bg-gray-500 active:bg-gray-600 text-white mr-2">닫기</button>
+                                <button className="btn btn-primary" onClick={handleSubmitNote}>등록</button>
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
+            )}
 
-            {
-                noteLoading ? (
-                    <div className="note-loading-container top-0 w-100 end-0 position-absolute d-block bg-dark z-3 bg-opacity-10">
-                        <div className="rotate-box position-absolute top-50 start-50 translate-middle">
-                            <i className="fa-solid fa-spinner fs-1 text-dark"></i>
-                        </div>
-                    </div>
-                ) : ''
-            }
-            {
-                alertSwitch ? (
-                        <div className={`note-alert-message alert alert-${alertStatus ? 'success' : 'danger'} position-fixed z-2 end-0 m-0`}>
-                            {alertMessage}
-                        </div>
-                    )
-                    : ''
-            }
         </div>
     );
+
 }
 
 export default Write;

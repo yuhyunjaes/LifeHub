@@ -9,7 +9,7 @@ export default defineConfig({
             input: ['resources/css/app.css', 'resources/js/app.jsx'],
             refresh: true,
         }),
-        react(),       // ✅ React 플러그인 추가
+        react(),
         tailwindcss(),
     ],
     server: {

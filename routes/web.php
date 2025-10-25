@@ -10,7 +10,7 @@ use App\Http\Controllers\NotepadController;
 use App\Http\Controllers\ChatController;
 use Illuminate\Support\Facades\Log;
 
-Route::post('/gemini/title', function (Request $request) {
+Route::post('/lifebot/title', function (Request $request) {
     $apiKey = env('GEMINI_API_KEY');
     $model = $request->input('model_name', 'models/gemini-2.5-flash');
     $prompt = $request->input('prompt', '테스트');

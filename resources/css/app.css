@@ -9,3 +9,91 @@
     --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
         'Segoe UI Symbol', 'Noto Color Emoji';
 }
+
+.btn {
+    @apply px-4 py-2 rounded-md transition-colors duration-150 cursor-pointer;
+}
+.btn-primary {
+    @apply bg-blue-500 text-white hover:bg-blue-600 active:bg-blue-700;
+}
+.btn-outline-primary {
+    @apply bg-white text-blue-500 hover:bg-gray-50 active:bg-gray-200 border border-blue-500;
+}
+
+.alert {
+    @apply px-4 py-3 rounded-md border font-medium flex items-center top-[70px] w-[calc(100%-250px)] fixed z-[2] right-0 m-0 animate-showAni;
+}
+.alert-success {
+    @apply bg-green-50 border-green-400 text-green-800;
+}
+.alert-danger {
+    @apply bg-red-50 border-red-400 text-red-800;
+}
+
+@keyframes showAni {
+    0%,100% { opacity: 0; }
+    10%,89.99% { opacity: 1; }
+}
+
+@utility animate-showAni {
+    animation: showAni 3.2s ease-out;
+}
+
+.modal-area {
+    @apply w-screen h-screen bg-black/10 z-[999] fixed top-0 left-0
+}
+.modal {
+    @apply size-full relative flex justify-center items-center
+}
+
+.modal-content {
+    @apply absolute bg-white w-[500px] rounded-[0.50rem] divide-y divide-gray-200
+}
+
+.modal-header {
+    @apply w-full p-3 flex justify-between items-center
+}
+.modal-body {
+    @apply w-full p-3 pb-5
+}
+.modal-footer {
+    @apply w-full p-3 flex justify-end items-center
+}
+.top-modal {
+    @apply animate-topModal top-[28px]
+}
+.mid-modal {
+    @apply animate-midModal
+}
+
+
+@utility animate-topModal {
+    animation: topModal 0.5s ease-in-out forwards;
+}
+
+@keyframes topModal {
+    from {
+        top: -25%;
+        opacity: 0;
+    }
+    to {
+        top: 28px;
+        opacity: 1;
+    }
+}
+
+
+@utility animate-midModal {
+    animation: midModal 0.5s ease-in-out forwards;
+}
+
+@keyframes midModal {
+    from {
+        transform: translateY(-25%);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}

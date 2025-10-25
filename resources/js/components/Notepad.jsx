@@ -16,22 +16,22 @@ function Notepad({ user, csrfToken}) {
     }, [user]);
 
     return (
-        <div className="container-fluid notepad-container p-0 d-flex">
-            <aside className="notepad-side-bar h-100">
+        <div className="w-screen h-[calc(100vh-70px)] flex">
+            <aside className="w-[250px] h-full">
                 <ul className="m-0 p-0">
                     <li>
-                        <Link className={`btn d-flex justify-content-start align-items-center w-100 py-2 ${isNotePage ? 'bg-primary text-white' : ''}`} to="/notepad/write">
+                        <Link className={`btn flex justify-start items-center w-full py-2 ${isNotePage ? 'bg-blue-500 text-white' : ''}`} to="/notepad/write">
                             <i className="fa-solid fa-clipboard m-0 ms-3"></i>
-                            <span className="ms-2">메모</span>
+                            <span className="ml-2">메모</span>
                         </Link>
-                        <Link className={`btn d-flex justify-content-start align-items-center w-100 py-2 ${isCalPage ? 'bg-primary text-white' : ''}`} to="/notepad/calendar">
+                        <Link className={`btn flex justify-start items-center w-full py-2 ${isCalPage ? 'bg-blue-500 text-white' : ''}`} to="/notepad/calendar">
                             <i className="fa-solid m-0 ms-3 fa-calendar-days"></i>
-                            <span className="ms-2">메모 캘린더</span>
+                            <span className="ml-2">메모 캘린더</span>
                         </Link>
                     </li>
                 </ul>
             </aside>
-            <main className="notepad-main h-100 bg-light">
+            <main className="w-[calc(100%-250px)] h-full bg-gray-50">
                 <Routes>
                     <Route path="write" element={<Write user={user} csrfToken={csrfToken} />} />
                     <Route path="write/:id" element={<Write user={user} csrfToken={csrfToken} />} />

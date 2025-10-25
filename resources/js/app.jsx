@@ -6,6 +6,7 @@ import Home from './components/Home';
 import GeminiChat from './components/GeminiChat';
 import Notepad from './components/Notepad';
 import MyPage from './components/MyPage';
+import '../css/app.css';
 
 function App() {
     const [user, setUser] = useState(undefined);
@@ -41,7 +42,7 @@ function App() {
             <Header csrfToken={csrfToken} user={user} setUser={setUser} />
             <Routes>
                 <Route path="/" element={<Home />} />
-                <Route path="/gemini/:roomId?" element={<GeminiChat user={user} csrfToken={csrfToken} />} />
+                <Route path="/lifebot/:roomId?" element={<GeminiChat user={user} csrfToken={csrfToken} />} />
                 <Route path="/notepad/*" element={<Notepad user={user} csrfToken={csrfToken} />} />
                 <Route path="/mypage" element={<MyPage />} />
             </Routes>

@@ -22,6 +22,8 @@ function GeminiChat({ user, csrfToken }) {
     const [baseTop, setBaseTop] = useState(0);
     const [baseScroll, setBaseScroll] = useState(0);
 
+    const [modal, setModal] = useState(false);
+
 
     const [alertSwitch, setAlertSwitch] = useState(false);
     const [alertMessage, setAlertMessage] = useState("");
@@ -33,46 +35,12 @@ function GeminiChat({ user, csrfToken }) {
     const textareaRef = useRef(null);
     const editRoomRef = useRef(null);
 
-    const modalRef = useRef(null);
-    const modalInstance = useRef(null);
-
     useEffect(() => {
         chatContainerRef.current?.scrollTo({
             top: chatContainerRef.current.scrollHeight,
             behavior: "smooth",
         });
     }, [messages]);
-
-    useEffect(() => {
-        if (!modalRef.current) return;
-
-        modalInstance.current = new bootstrap.Modal(modalRef.current);
-
-        const handleHide = () => {
-            modalRef.current?.setAttribute("inert", "");
-            document.activeElement?.blur();
-        };
-
-        const handleShow = () => {
-            modalRef.current?.removeAttribute("inert");
-        };
-
-        modalRef.current.addEventListener("show.bs.modal", handleShow);
-        modalRef.current.addEventListener("hide.bs.modal", handleHide);
-
-        return () => {
-            modalRef.current?.removeEventListener("show.bs.modal", handleShow);
-            modalRef.current?.removeEventListener("hide.bs.modal", handleHide);
-        };
-    }, []);
-
-    const handleOpenModal = () => {
-        modalInstance.current?.show();
-    };
-
-    const handleCloseModal = () => {
-        modalInstance.current?.hide();
-    };
 
     useEffect(() => {
         if (editRoomStatus && titleInputRef.current) {
@@ -92,7 +60,7 @@ function GeminiChat({ user, csrfToken }) {
         setChatId(null);
         setMessages([]);
         setPrompt("");
-        navigate("/gemini");
+        navigate("/lifebot");
         textareaRef.current?.focus();
     }
 
@@ -144,7 +112,7 @@ function GeminiChat({ user, csrfToken }) {
                 setEditRoomStatus(false);
                 showAlert(data.message, true);
                 setEditRoomId("");
-                handleCloseModal();
+                setModal(false);
             } else {
                 showAlert(data.message, false);
             }
@@ -199,7 +167,7 @@ function GeminiChat({ user, csrfToken }) {
 
         const id = String(room.room_id);
         if (String(chatId) === id) return;
-        navigate(`/gemini/${id}`);
+        navigate(`/lifebot/${id}`);
         setMessages([]);
     };
 
@@ -231,7 +199,7 @@ function GeminiChat({ user, csrfToken }) {
                     });
                 } else {
                     showAlert(data.message, false);
-                    navigate('/gemini');
+                    navigate('/lifebot');
                     setChatId(null);
                     setMessages([]);
                 }
@@ -262,7 +230,7 @@ function GeminiChat({ user, csrfToken }) {
             let currentRoomId = chatId;
 
             if (!chatId && !currentRoomId) {
-                const titleRes = await fetch("/gemini/title", {
+                const titleRes = await fetch("/lifebot/title", {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json",
@@ -300,7 +268,7 @@ function GeminiChat({ user, csrfToken }) {
                     setRooms((room) => [roomList, ...room]);
 
                     await new Promise((r) => setTimeout(r, 100));
-                    navigate(`/gemini/${currentRoomId}`);
+                    navigate(`/lifebot/${currentRoomId}`);
                 }
             }
 
@@ -507,7 +475,7 @@ function GeminiChat({ user, csrfToken }) {
     };
 
     return (
-        <div className="gemini-container container-fluid p-0 overflow-hidden d-flex position-relative" onClick={(e)=> {
+        <div className="w-screen h-[calc(100vh-70px)] overflow-hidden flex relative" onClick={(e)=> {
             if (
                 e.target.classList.contains('room-edit-btn') ||
                 e.target.classList.contains('edit-room-btn') ||
@@ -524,35 +492,34 @@ function GeminiChat({ user, csrfToken }) {
                 setSaveRoomTitle("");
             }
         }}>
-            <div className="gemini-side-bar h-100 overflow-x-hidden overflow-y-auto position-relative" onScroll={(e) => {
+            <div className="lifeBot-side-bar w-[250px] h-full overflow-x-hidden overflow-y-auto relative" onScroll={(e) => {
                 if(!editRoomRef.current) return;
                 const delta = e.target.scrollTop - baseScroll;
                 editRoomRef.current.style.top = `${baseTop - delta}px`;
             }}
             >
-                <div className="w-100 position-sticky top-0 bg-white">
+                <div className="w-full sticky top-0 bg-white">
                     <button
                         onClick={resetRoom}
-                        className="btn d-flex justify-content-start align-items-center w-100 px-0 py-2"
+                        className="btn flex justify-start items-center w-full px-0 py-2 hover:bg-gray-100"
                     >
-                        <i className="fa-solid fa-pen-to-square m-0 ms-3"></i>
-                        <span className="ms-2">새 채팅</span>
+                        <i className="fa-solid fa-pen-to-square m-0"></i>
+                        <span className="ml-2">새 채팅</span>
                     </button>
                 </div>
 
-                <div className="w-100 mt-3">
-                    <span className="form-label small-font ms-3 w-100">채팅</span>
+                <div className="w-full mt-3">
+                    <span className="text-xs ml-3 w-full">채팅</span>
                     {rooms.map((room) => (
                         <div
                             onClick={(e) => changeRoom(room, e)}
                             key={room.room_id}
-                            className={`btn room-btn d-flex justify-content-between align-items-center w-100 px-0 py-2 ${
-                                chatId === room.room_id ? "text-white bg-primary" : ""
+                            className={`btn group room-btn transition-colors duration-300 [&:not(.bg-blue-500):hover]:bg-gray-100 flex justify-between items-center w-full px-0 py-2 cursor-pointer ${
+                                chatId === room.room_id ? "text-white bg-blue-500" : ""
                             }`}
-                            style={{cursor: "pointer"}}
                         >
                             {(editRoomStatus && editRoomId === room.room_id) ? (
-                                <input ref={titleInputRef} type="text" name="" id="" className="form-control edit-room-title" value={room.title}
+                                <input ref={titleInputRef} type="text" name="" id="" className="edit-room-title" value={room.title}
                                        onKeyDown={(e) => {
                                            if(e.key === 'Enter') {
                                                if(room.title.trim().length <= 0) return;
@@ -591,12 +558,12 @@ function GeminiChat({ user, csrfToken }) {
 
                                 />
                             ) : (
-                                <span className="m-0 overflow-hidden d-block room-title ms-3 text-start">
+                                <span className="m-0 overflow-hidden block room-title w-[60%] whitespace-nowrap text-ellipsis text-left">
                                 {room.title}
                             </span>
                             )}
 
-                            <button className={`btn room-edit-btn  p-0 me-3 ${editRoomId === room.room_id ? 'opacity-100' : ''}`} onClick={(e)=> {
+                            <button className={`!p-0 btn room-edit-btn active:border-0 group-hover:opacity-100 cursor-pointer transition-opacity duration-300 mr-3 ${editRoomId === room.room_id ? 'opacity-100' : 'opacity-0'}`} onClick={(e)=> {
                                 setEditRoomId(room.room_id);
 
                                 setEditRoom(true);
@@ -604,20 +571,19 @@ function GeminiChat({ user, csrfToken }) {
                                 editRoomRef.current.style.top = `${y}px`;
 
                                 setBaseTop(y);
-                                setBaseScroll(e.currentTarget.closest('.gemini-side-bar').scrollTop);
+                                setBaseScroll(e.currentTarget.closest('.lifeBot-side-bar').scrollTop);
                             }}>
                                 <i className={`fa-solid edit-room-btn fa-ellipsis ${chatId === room.room_id ? 'text-white' : ''}`}></i>
                             </button>
                         </div>
                     ))}
                 </div>
-                <div className="w-100 position-sticky bg-white border-top bottom-0 p-0 py-5"></div>
+                <div className="w-full sticky bg-white border-t border-gray-100 bottom-0 p-0 py-5"></div>
             </div>
-
-            <div className="gemini-main h-100 d-flex flex-column bg-light position-relative">
+            <div className="w-[calc(100%-250px)] h-full flex flex-col bg-gray-50 relative">
                 {alertSwitch && (
                     <div
-                        className={`alert-message alert alert-${alertStatus ? "success" : "danger"} position-fixed z-2 end-0 m-0`}
+                        className={`alert ${alertStatus ? "alert-success" : "alert-danger"}`}
                     >
                         {alertMessage}
                     </div>
@@ -625,38 +591,32 @@ function GeminiChat({ user, csrfToken }) {
 
                 <div
                     ref={chatContainerRef}
-                    className="w-100 chat-container d-flex flex-column-reverse overflow-x-hidden overflow-y-auto"
+                    className="w-full h-[calc(100%-80px)] flex flex-col-reverse overflow-x-hidden overflow-y-auto"
                 >
                     {chatId && (
-                        <div className="prompt-width py-5">
+                        <div className="w-[768px] mx-auto py-5">
                             {messages.map((msg, i) => (
                                 <div
                                     key={i}
-                                    className={`d-flex chat-item ${
+                                    className={`flex chat-item mb-[100px] transition-opacity duration-300 ${
                                         msg.role === "user"
-                                            ? "justify-content-end"
-                                            : "justify-content-start position-relative"
+                                            ? "justify-end"
+                                            : "justify-start relative"
                                     }`}
                                 >
                                     <div
-                                        className={`p-3 mx-0 rounded-4 shadow-sm ${
+                                        className={`p-3 mx-0 rounded-[0.75rem] shadow-sm max-w-[70%] whitespace-pre-wrap break-words ${
                                             msg.role === "user"
-                                                ? "bg-primary text-white"
-                                                : "bg-white text-dark border"
+                                                ? "bg-blue-500 text-white"
+                                                : "bg-white text-black border border-gray-50"
                                         }`}
-                                        style={{
-                                            maxWidth: "70%",
-                                            whiteSpace: "pre-wrap",
-                                            wordBreak: "break-word",
-                                            borderRadius: "1.25rem",
-                                        }}
                                     >
                                         {msg.text}
                                     </div>
 
                                     {msg.id && msg.role === "model" && (
                                         <div
-                                            className="position-absolute chat-control start-0 w-100 d-flex justify-content-start align-items-center">
+                                            className="absolute h-[50px] bottom-[-50px] left-0 w-full flex justify-start items-center">
                                             <button
                                                 className="btn"
                                                 title="복사"
@@ -682,30 +642,23 @@ function GeminiChat({ user, csrfToken }) {
                     )}
                 </div>
 
-                <div className={`w-100 prompt-container p-3 ${chatId ? "position-relative" : ""}`}>
+                <div className={`w-full h-[80px] p-3 ${chatId ? "relative" : ""}`}>
                     <div
-                        className={`w-100 d-flex justify-content-center align-items-end position-absolute start-0 ${
-                            chatId ? "bottom-0 mb-3" : "bottom-50"
+                        className={`w-full flex justify-center items-end absolute left-0 ${
+                            chatId ? "bottom-0 mb-3" : "bottom-[50%]"
                         }`}
                     >
-                        {!chatId && <h2 className="position-absolute top-title">새로운 채팅을 시작하세요.</h2>}
-                        <div className="prompt-width bg-white rounded-5 shadow-sm p-2 d-flex align-items-end">
+                        {!chatId && <h2 className="absolute !top-[-150%] text-3xl">새로운 채팅을 시작하세요.</h2>}
+                        <div className="w-[768px] bg-white rounded-[2rem] shadow-sm p-2 flex items-end overflow-hidden">
                             <textarea
                                 ref={textareaRef}
-                                className="form-control prompt border-0 text-dark bg-transparent flex-grow-1 overflow-y-auto overflow-x-hidden"
+                                className="leading-[40px] ms-2 min-h-[40px] max-h-[150px] placeholder-black focus:bg-transparent border-0 text-black bg-transparent flex-grow overflow-y-auto overflow-x-hidden resize-none "
                                 value={prompt}
                                 onChange={(e) => setPrompt(e.target.value)}
                                 onKeyDown={handleKeyDown}
                                 placeholder="AI에게 물어볼 내용을 입력하세요"
                                 disabled={loading}
                                 rows="1"
-                                style={{
-                                    resize: "none",
-                                    minHeight: "40px",
-                                    maxHeight: "150px",
-                                    lineHeight: "1.5",
-                                    fontSize: "1rem",
-                                }}
                                 onInput={(e) => {
                                     e.target.style.height = "auto";
                                     e.target.style.height = `${e.target.scrollHeight}px`;
@@ -714,14 +667,15 @@ function GeminiChat({ user, csrfToken }) {
 
                             <button
                                 onClick={handleSubmit}
-                                className="prompt-btn bg-light shadow-sm rounded-circle border-0 px-3 ms-2 d-flex justify-content-center align-items-center"
+                                className="w-[40px] h-[40px] bg-gray-50 shadow-sm rounded-full border-0 px-3 ml-2 flex justify-center items-center"
                                 disabled={loading}
                             >
                                 {loading ? (
-                                    <div className="spinner-border spinner-border-sm text-secondary"
-                                         role="status"></div>
+                                    <div className="animate-spin m-0 p-0 w-[1rem] h-[1rem] flex justify-center items-center">
+                                        <i className="fa-solid fa-spinner"></i>
+                                    </div>
                                 ) : (
-                                    <i className="fa-solid small-font fa-arrow-up text-dark"></i>
+                                    <i className="fa-solid text-xs fa-arrow-up text-black"></i>
                                 )}
                             </button>
                         </div>
@@ -729,50 +683,40 @@ function GeminiChat({ user, csrfToken }) {
                 </div>
             </div>
 
-            <div ref={editRoomRef} className="position-absolute edit-room p-2 bg-light shadow rounded" style={{width: '170px', display: `${editRoom ? 'block' : 'none'}`,  left: '200px'}}>
-                <button className="btn btn-light w-100 d-flex justify-content-start align-items-center" onClick={() => {
+            <div ref={editRoomRef} className={`absolute edit-room p-2 bg-gray-50 shadow-sm left-[200px] rounded w-[170px] ${editRoom ? 'block' : 'hidden'}`}>
+                <button className="btn w-full flex hover:bg-gray-100 cursor-pointer justify-start items-center" onClick={() => {
                     handleChangeType(editRoomId);
                 }}>
                     <i className="fa-solid fa-pen m-0"></i>
-                    <span className="m-0 ms-2">이름 바꾸기</span>
+                    <span className="m-0 ml-2">이름 바꾸기</span>
                 </button>
-                <button className="btn btn-light w-100 d-flex justify-content-start align-items-center text-danger" onClick={handleOpenModal}>
+                <button className="btn w-full flex justify-start hover:bg-gray-100 cursor-pointer items-center text-red-600" onClick={() => {setModal(true)}}>
                     <i className="fa-solid fa-trash-can m-0"></i>
-                    <span className="m-0 ms-2">삭제하기</span>
+                    <span className="m-0 ml-2">삭제하기</span>
                 </button>
             </div>
 
-            <div ref={modalRef}
-                 className="modal fade" onClick={handleCloseModal}
-                 id="exampleModal"
-                 tabIndex="-1"
-                 inert
-                 aria-labelledby="exampleModalLabel"
-            >
-                <div className="modal-dialog" onClick={(e) => e.stopPropagation()}>
-                    <div className="modal-content">
-                        <div className="modal-header m-0">
-                            <h1 className="modal-title fs-5 m-0" id="exampleModalLabel">채팅방 삭제</h1>
-                            <button type="button" className="btn-close" data-bs-dismiss="modal"
-                                    aria-label="Close"></button>
-                        </div>
-                        <div className="modal-body w-100">
-                            {editRoomId && (
-                                rooms.find(item => item.room_id === editRoomId)?.title + " " || " "
-                            )}
-                             채팅방을 정말 삭제 하시겠습니까?
-                        </div>
-                        <div className="modal-footer w-100">
-                            <button type="button" className="btn btn-secondary" data-bs-dismiss="modal">취소</button>
-                            <button type="button" className="btn btn-primary"
-                                    onClick={() => {
-                                        deleteRoom(editRoomId)
-                                    }}
-                            >삭제</button>
+            {modal && (
+                <div className="modal-area" onClick={() => {setModal(false)}}>
+                    <div className="modal">
+                        <div className="modal-content top-modal" onClick={(e) => {e.stopPropagation()}}>
+                            <div className="modal-header">
+                                <h1 className="text-xl m-0">채팅방 삭제</h1>
+                                <button onClick={() => {setModal(false)}}>
+                                    <i className="fa-solid fa-x text-gray-500 hover:text-black cursor-pointer"></i>
+                                </button>
+                            </div>
+                            <div className="modal-body">
+                                <span>"{rooms.find(item => item.room_id === editRoomId).title}" 채팅방을 정말 삭제 하시겠습니까?</span>
+                            </div>
+                            <div className="modal-footer">
+                                <button onClick={() => {setModal(false)}} className="btn bg-gray-400 hover:bg-gray-500 active:bg-gray-600 text-white mr-2">닫기</button>
+                                <button className="btn btn-primary" onClick={() => {deleteRoom(editRoomId)}}>삭제</button>
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
+            )}
         </div>
     );
 }

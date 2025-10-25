@@ -2,12 +2,9 @@
 
 /*전역*/
 * {
-    margin: 0 auto;
-    padding: 0;
     font-family: "Jua", sans-serif;
     font-weight: 400;
     font-style: normal;
-
 }
 .small-font {
     font-size: 0.75rem !important;
@@ -16,10 +13,6 @@ input[type="text"],
 textarea {
     outline: none !important;  /* 클릭 시 기본 테두리 제거 */
     box-shadow: none !important;
-}
-
-.btn {
-    z-index: 0 !important;
 }
 
 .text-center {
@@ -40,65 +33,14 @@ input[type=number]::-webkit-inner-spin-button {
 .header {
     height: 70px;
 }
-.header > div {
-    width: calc(100% / 3);
-}
-.header > div:nth-child(2) {
-    overflow: hidden;
-}
 .logo {
     width: 100px;
     height: 40px;
-}
-.side-menu-toggle {
-    display: none;
 }
 .side-menu-container {
     height: 100vh;
     z-index: 999 !important;
     display: none;
-}
-.auth-btn {
-    width: 40px;
-    height: 40px;
-}
-@media screen and (max-width: 900px){
-    .header > div:nth-child(2) {
-        width: 0;
-    }
-    .header > div:nth-child(1),
-    .header > div:nth-child(3){
-        width: 50%;
-    }
-}
-@media screen and (max-width: 600px){
-    .header > div:nth-child(1) ul,
-    .auth {
-        overflow: hidden;
-        width: 0;
-    }
-    .header > div:nth-child(1) {
-        width: 75%;
-    }
-    .header > div:nth-child(3) {
-        width: 25%;
-    }
-    .side-menu-toggle {
-        display: block;
-    }
-
-    #side-menu-toggle:checked ~ .side-menu-container {
-        display: block;
-    }
-}
-.auth-control-box {
-    width: 200px;
-    right: 0;
-    top: 40px;
-    display: none;
-}
-#auth-box:checked ~ .auth-control-box {
-    display: block;
 }
 
 
@@ -158,68 +100,37 @@ input[type=number]::-webkit-inner-spin-button {
     height: calc(100vh - 70px);
 }
 
+/* ✅ 메모장 Write 컴포넌트에 필요한 스타일만 유지 */
 
-/*메모장*/
+/* 로딩 오버레이 높이 계산 */
 .note-loading-container {
     height: calc(100vh - 70px);
 }
-.notepad-container {
-    height: calc(100vh - 70px);
-}
-.calendar {
-    grid-template-columns: repeat(7, 1fr);
-}
-.day {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-}
-.calendar-control {
-    height: 10%;
-}
-.day-title {
-    height: 50px;
-    background: #dee2e6;
-}
-.calendar {
-    height: calc(90% - 50px);
-}
-.date-btn {
-    width: 2rem;
-    height: 2rem;
-    font-size: 1rem;
-}
 
-.notepad-side-bar {
-    width: 250px;
-}
-
-.notepad-main {
-    width: calc(100% - 250px);
-}
+/* alert 메시지 위치 조정 */
 .note-alert-message {
     width: calc(100% - 250px);
     top: 70px;
     animation: show-ani 3.2s ease-out;
 }
 
-.calendar-container > div:nth-child(1),
-.note-container > div:nth-child(1){
+/* Sidebar-Content Layout (Write 구역에서 flex 비율 적용됨) */
+.note-container > div:nth-child(1) {
     flex: 1;
 }
-.calendar-container > div:nth-child(2),
-.note-container > div:nth-child(2){
+.note-container > div:nth-child(2) {
     flex: 3;
 }
-.application-header,
-.write-header{
+
+/* Write 영역 Header / Body 비율 */
+.write-header {
     height: 10%;
 }
-.application-body,
 .write-body {
     height: 90%;
 }
 
+/* 메모 리스트 영역 구성 */
 .note-control {
     height: 5%;
 }
@@ -229,6 +140,8 @@ input[type=number]::-webkit-inner-spin-button {
 .note-list {
     height: 90%;
 }
+
+/* Quill editor toolbar sticky 유지 */
 .notepad-write > div:nth-child(1) {
     position: sticky;
     top: 0;
@@ -238,13 +151,18 @@ input[type=number]::-webkit-inner-spin-button {
     border-left-color: transparent;
     border-right-color: transparent;
 }
+
+/* 스크롤바 숨김 */
 .notepad-write::-webkit-scrollbar {
     display: none;
 }
+
+/* 기본 border 제거 */
 .notepad-write *:not(.notepad-write > div:nth-child(1)) {
     border: none !important;
 }
 
+/* 메모 항목 hover 시 삭제 버튼 표시 */
 .note-item:hover button {
     opacity: 1;
     pointer-events: all;
@@ -252,105 +170,17 @@ input[type=number]::-webkit-inner-spin-button {
 .note-item button {
     opacity: 0;
     pointer-events: none;
-    transition: opacity.4s;
+    transition: opacity .4s;
 }
+
+/* 제목 Input 투명 처리 */
 .title-form {
     background: transparent;
 }
 
 
-@media screen and (max-width: 1700px) {
-    .date-box {
-        position: absolute;
-        top: 50%;
-        transform: translate(-50%, -50%);
-        right: 25px;
-    }
-}
-
 
 /*gemini*/
-.gemini-container {
-    height: calc(100vh - 70px);
-}
-.gemini-side-bar {
-    width: 250px;
-}
-.gemini-side-bar::-webkit-scrollbar {
+.lifeBot-side-bar::-webkit-scrollbar {
     display: none;
-}
-.gemini-main {
-    width: calc(100% - 250px);
-}
-.chat-container {
-    height: calc(100% - 80px);
-}
-.prompt-container {
-    height: 80px;
-}
-.prompt {
-    background: transparent !important;
-}
-.prompt::placeholder {
-    color: black !important;
-}
-.prompt:focus {
-    background: transparent !important;
-}
-.prompt-width {
-    width: 60%;
-}
-.prompt-btn {
-    width: 40px;
-    height: 40px;
-}
-.room-title {
-    width: 60%;
-    white-space: nowrap;
-    text-overflow: ellipsis;
-}
-
-.alert-message {
-    width: calc(100% - 250px);
-    top: 70px;
-    animation: show-ani 3.2s ease-out;
-}
-
-@keyframes show-ani {
-    0%,100% {
-        opacity: 0;
-    }
-    10%,89.99% {
-        opacity: 1;
-    }
-}
-.top-title {
-    top: -150% !important;
-}
-
-.chat-item {
-    margin-bottom: 100px;
-    transition: opacity.4s;
-}
-.chat-control {
-    height: 50px;
-    bottom: -50px;
-}
-
-.room-btn {
-    transition: background.4s, color.4s;
-}
-.room-btn:hover:not(.bg-primary) {
-    background: #f8f9fa !important;
-}
-
-.room-edit-btn {
-    opacity: 0;
-    transition: opacity.4s;
-}
-.room-edit-btn:active {
-    border: none !important;
-}
-.room-btn:hover .room-edit-btn {
-    opacity: 1;
 }
